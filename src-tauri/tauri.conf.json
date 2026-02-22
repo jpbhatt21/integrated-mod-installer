@@ -1,0 +1,78 @@
+{
+	"$schema": "https://schema.tauri.app/config/2",
+	"productName": "Integrated Mod Installer (IMI)",
+	"version": "1.0.0",
+	"identifier": "jp.bhatt.imi",
+	"build": {
+		"beforeDevCommand": "npm run dev",
+		"devUrl": "http://localhost:3420",
+		"beforeBuildCommand": "npm run build",
+		"frontendDist": "../dist"
+	},
+	"app": {
+		"windows": [
+			{
+				"title": "Integrated Mod Installer",
+				"resizable": true,
+				"fullscreen": false,
+				"decorations": false,
+				"transparent": true,
+				"minWidth": 720,
+				"minHeight": 480,
+				"dragDropEnabled": false
+			}
+		],
+		"security": {
+			"csp": null,
+			"assetProtocol": {
+				"enable": true,
+				"scope": [
+					"**"
+				]
+			},
+			"capabilities": [
+				"default"
+			]
+		},
+		"withGlobalTauri": false
+	},
+	"bundle": {
+		"createUpdaterArtifacts": true,
+		"active": true,
+		"targets": "nsis",
+		"icon": [
+			"icons/imi.png",
+			"icons/imi.ico"
+		],
+		"windows": {
+			"nsis": {
+				"installerIcon": "icons/imi.ico"
+			}
+		},
+		"resources": [
+			"ext/*"
+		]
+	},
+	"plugins": {
+		"updater": {
+			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVDNDVCOEZFQzIyMkJDMjkKUldRcHZDTEMvcmhGWEhGdWNGcFJzN1hYR05YVXZPMXlzcVc3b2xrMzA5M25SdTZkMldtOUFWbzcK",
+			"endpoints": [
+				"https://github.com/jpbhatt21/integrated-mod-installer/releases/latest/download/latest.json"
+			],
+			"windows": {
+				"installMode": "passive"
+			}
+		},
+		"deep-link": {
+			"desktop": {
+				"schemes": [
+					"imm",
+					"wwmm"
+				]
+			}
+		},
+		"fs": {
+			"requireLiteralLeadingDot": false
+		}
+	}
+}

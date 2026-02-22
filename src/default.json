@@ -1,0 +1,22 @@
+{
+	"version": "1.0.0",
+	"updatedAt": 0,
+	"ignore": "0.9.0",
+	"notice": 0,
+	"clientDate": "",
+	"XXMI": "",
+	"preReleases": false,
+	"paths": {
+		"": "",
+		"WW": "",
+		"ZZ": "",
+		"GI": "",
+		"SR": "",
+		"EF": ""
+	},
+	"categorized": true,
+	"preview": true,
+	"source": true,
+	"concDl":1,
+	"minimizeToTray": true
+}

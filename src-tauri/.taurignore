@@ -1,0 +1,5 @@
+config.json
+.backups/*
+.backups
+downloads*
+downloads
