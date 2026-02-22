@@ -129,7 +129,7 @@ export default function Dashboard({
 												(e.currentTarget.parentElement?.lastElementChild as HTMLButtonElement)?.click();
 											}}
 										>
-											{item.name?.replaceAll("DISABLED_", "")+"dasdsadgsadjashjdhashdjasdjashdjas"}
+											{item.name?.replaceAll("DISABLED_", "")}
 										</Label>
 										<Button
 											size="sm"
