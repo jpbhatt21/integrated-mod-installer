@@ -60,8 +60,6 @@ const prev: {
 } = {};
 function App() {
 	const [currentPage, setCurrentPage] = useState<Page>("dashboard");
-	const [wallpaper, setWallpaper] = useState<string>("");
-	const wallpaperRef = useRef<HTMLDivElement>(null);
 	const categories = useAtomValue(CATEGORIES);
 	const config = useAtomValue(CONFIG);
 	const [urlQueue, setUrlQueue] = useState<string[]>([]);
@@ -228,15 +226,6 @@ function App() {
 	useEffect(() => {
 		const prevDownloads = JSON.parse(sessionStorage.getItem("downloads") || "{}");
 
-		async function positioner() {
-			if(!await appWindow.isFocused() || await appWindow.isMinimized()) return;
-			let { x, y } = await appWindow.outerPosition();
-			if (wallpaperRef.current) {
-				// wallpaperRef.current.style.left = `${x}px`;
-				// wallpaperRef.current.style.top = `${y}px`;
-				wallpaperRef.current.style.backgroundPosition = `${-x}px ${-y}px`;
-			}
-		}
 		function onWindowFocus() {
 			let bg = document.getElementById("bg-img");
 			bg && (bg.style.opacity = "1");
@@ -245,16 +234,8 @@ function App() {
 			let bg = document.getElementById("bg-img");
 			bg && (bg.style.opacity = "0");
 		}
-		invoke("get_wallpaper").then((data: any) => {
-			setWallpaper(data);
-			setTimeout(() => {
-				let bg = document.getElementById("bg-img");
-				bg && (bg.style.opacity = "1");
-				window.addEventListener("focus", onWindowFocus);
-				window.addEventListener("blur", onWindowBlur);
-			}, 600);
-		});
-		const interval = setInterval(positioner, 100);
+
+	
 		let unlisten: (() => void) | undefined;
 		const initDeepLink = async () => {
 			const initialUrls = await getCurrent();
@@ -385,7 +366,6 @@ function App() {
 			if (unlisten) unlisten();
 			window.removeEventListener("focus", onWindowFocus);
 			window.removeEventListener("blur", onWindowBlur);
-			clearInterval(interval);
 		};
 	}, []);
 	useEffect(() => {
@@ -416,15 +396,7 @@ function App() {
 		}
 	}, [downloads]);
 	return (
-		<div className="bg-sidebar fixed top-0 flex flex-col w-full h-screen overflow-hidden">
-			<div
-				ref={wallpaperRef}
-				id="bg-img"
-				className="fixed w-full h-full duration-300 bg-center opacity-0"
-				style={{ backgroundImage: `url(${wallpaper})` }}
-			/>
-			<div className="fixed w-full h-full bg-sidebar/90 backdrop-blur-[999px] " />
-
+		<div className=" fixed top-0 flex flex-col w-full h-screen overflow-hidden">
 			<div className="fixed flex w-full h-full pt-8">
 				{/* Sidebar */}
 				<div className="border-border flex flex-col w-20 h-full">

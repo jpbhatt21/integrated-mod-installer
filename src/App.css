@@ -9,6 +9,9 @@
 	right: 0;
 	z-index: 1000;
 }
+html,body {
+  background: transparent;
+}
 
 @import "tailwindcss";
 @import "tw-animate-css";
@@ -103,6 +106,7 @@ input[type="number"]::-webkit-outer-spin-button {
 	--border: #4e463a;
 	--input: oklch(100% 0.00011 271.152 / 0.15);
 	--sidebar: oklch(0.216 0.006 56.043);
+	background: #0008;
 }
 /* ========================================
    Font Faces

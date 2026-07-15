@@ -16,7 +16,6 @@ use tauri::{menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
 };
 use tauri_plugin_deep_link::DeepLinkExt;
-mod wallpaper_manager;
 const PROGRESS_UPDATE_THRESHOLD: u64 = 1024;
 const BUFFER_SIZE: usize = 8192;
 
@@ -102,7 +101,7 @@ fn safe_remove_file(file_path: &Path) -> Result<(), String> {
         // Then check if the parent directory is empty and remove it if so
         if is_directory_empty(parent_dir).map_err(|e| e.to_string())? {
             if let Err(e) = std::fs::remove_dir(parent_dir) {
-                println!("Could not remove empty directory {:?}: {}", parent_dir, e);
+                tracing::warn!("Could not remove empty directory {:?}: {}", parent_dir, e);
                 // Don't return error here, as the main file removal succeeded
             }
         }
@@ -139,17 +138,17 @@ fn clean_folder_before_extraction(
             }
 
             // Delete everything else
-            println!("Cleaning up file before extraction: {}", file_name);
+            tracing::info!("Cleaning up file before extraction: {}", file_name);
             if let Err(e) = std::fs::remove_file(&file_path) {
-                println!("Failed to remove file {}: {}", file_name, e);
+                tracing::warn!("Failed to remove file {}: {}", file_name, e);
             }
         } else if file_path.is_dir() {
             let dir_name = file_path.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
             // Delete all directories
-            println!("Cleaning up directory before extraction: {}", dir_name);
+            tracing::info!("Cleaning up directory before extraction: {}", dir_name);
             if let Err(e) = std::fs::remove_dir_all(&file_path) {
-                println!("Failed to remove directory {}: {}", dir_name, e);
+                tracing::warn!("Failed to remove directory {}: {}", dir_name, e);
             }
         }
     }
@@ -245,20 +244,20 @@ async fn extract_archive(
     let save_path = save_path.as_str();
     let file_name = file_name.as_str();
     // Clean folder before extraction
-    println!("Cleaning folder before extracting archive");
+    tracing::info!("Cleaning folder before extracting archive");
     clean_folder_before_extraction(Path::new(&save_path), &file_name)?;
-    println!("Starting extraction");
+    tracing::info!("Starting extraction for '{}'", file_name);
     let before = Instant::now();
     let res = decompress_file(app_handle.clone(), file_path.to_str().unwrap(), &save_path);
     let duration = before.elapsed();
-    println!("extraction completed in: {:.2?}", duration);
+    tracing::info!("Extraction completed in: {:.2?}", duration);
     if let Err(e) = res.await {
-        println!("extraction error: {}", e);
+        tracing::error!("Extraction error for '{}': {}", file_name, e);
     } else {
         if del {
             safe_remove_file(&file_path)?;
         }
-        println!("Archive file removed after extraction");
+        tracing::info!("Archive file removed after extraction");
     }
     
     if !del {
@@ -285,18 +284,18 @@ async fn extract_archive(
         drop(counts);
         
         if let Some(new_count) = count_info {
-            println!(
+            tracing::info!(
                 "Decreased download count for key '{}': {}",
                 key,
                 new_count
             );
         }
-        println!(
+        tracing::info!(
             "Emitting completion event for: {}",
             file_name
         );
         if !valid {
-            println!(
+            tracing::warn!(
                 "Session {} invalid after extraction for key '{}'",
                 valid, key
             );
@@ -321,7 +320,7 @@ async fn download_and_unzip(
     emit: bool,
 ) -> Result<(), String> {
     // Increment download count for this key
-    println!(
+    tracing::info!(
         "Starting download for: {}, URL: {}, Save Path: {}, Key: {}, Emit: {}",
         file_name, download_url, save_path, key, emit
     );
@@ -330,18 +329,18 @@ async fn download_and_unzip(
         if let Some(&count) = counts.get(&key) {
             if count >= 1 {
                 drop(counts);
-                println!("Download already in progress for key '{}', skipping", key);
+                tracing::warn!("Download already in progress for key '{}', skipping", key);
                 return Ok(());
             }
         }
         *counts.entry(key.clone()).or_insert(0) = 1;
         drop(counts);
-        println!(
+        tracing::info!(
             "Download count for key '{}': 1",
             key
         );
     }
-    println!(
+    tracing::info!(
         "Initiating download of: {} from URL: {}",
         file_name, download_url
     );
@@ -379,7 +378,7 @@ async fn download_and_unzip(
     let total_size = response
         .content_length()
         .ok_or("Failed to get content length")?;
-    println!(
+    tracing::info!(
         "Total size of {}: {}",
         file_name,
         format_bytes(total_size)
@@ -391,7 +390,7 @@ async fn download_and_unzip(
     } else {
         format!("{}/downloads/{}", cwd, key)
     };
-    println!(
+    tracing::info!(
         "Saving {} to: {}",
         file_name, new_save_path
     );
@@ -422,7 +421,7 @@ async fn download_and_unzip(
             drop(counts);
 
             if count == 0 {
-                println!(
+                tracing::info!(
                     "Download cancelled for key '{}', aborting download of: {}",
                     key,
                     file_name
@@ -505,7 +504,7 @@ async fn download_and_unzip(
         0.0
     };
 
-    println!(
+    tracing::info!(
         "Download completed for '{}': {} in {:.2}s (Avg Speed: {})",
         file_name,
         format_bytes(downloaded),
@@ -513,7 +512,7 @@ async fn download_and_unzip(
         format_speed(avg_speed)
     );
 
-    println!(
+    tracing::info!(
         "Download completed successfully for: {}",
         // current_sid,
         file_name
@@ -548,7 +547,7 @@ async fn download_and_unzip(
         )
         .await?;
     }
-    println!(
+    tracing::info!(
         "Download and extraction completed successfully for: {}",
         file_name
     );
@@ -562,12 +561,12 @@ fn cancel_install(key: String) -> Result<(), String> {
     if let Some(count) = counts.get_mut(&key) {
         if *count > 0 {
             *count -= 1;
-            println!("Decreased download count for key '{}': {}", key, *count);
+            tracing::info!("Decreased download count for key '{}': {}", key, *count);
 
             // Remove key if count reaches 0
             if *count == 0 {
                 counts.remove(&key);
-                println!("Removed key '{}' from download counts", key);
+                tracing::info!("Removed key '{}' from download counts", key);
             }
             Ok(())
         } else {
@@ -581,10 +580,10 @@ fn cancel_install(key: String) -> Result<(), String> {
 #[tauri::command]
 fn get_username() -> String {
     let new_sid = SESSION_ID.fetch_add(1, Ordering::SeqCst) + 1;
-    println!("Session changed, new session ID: {}", new_sid);
+    tracing::info!("Session changed, new session ID: {}", new_sid);
 
     let username = std::env::var("USERNAME").unwrap_or_else(|_| "Unknown".to_string());
-    println!("Username: {}, Session ID: {}", username, new_sid);
+    tracing::info!("Username: {}, Session ID: {}", username, new_sid);
     username
 }
 #[tauri::command]
@@ -596,7 +595,8 @@ fn exit_app() {
 fn get_session_id() -> u64 {
     SESSION_ID.load(Ordering::SeqCst)
 }
-
+#[cfg(target_os = "windows")]
+use window_vibrancy::apply_acrylic;
 #[tauri::command]
 fn set_cwd() -> Result<String, String> {
     let current_dir = std::env::current_dir()
@@ -610,7 +610,7 @@ fn set_cwd() -> Result<String, String> {
     *cwd = path_str.clone();
     drop(cwd);
     
-    println!("Current working directory set to: {}", path_str);
+    tracing::info!("Current working directory set to: {}", path_str);
     Ok(path_str)
 }
 
@@ -620,7 +620,7 @@ fn get_cwd() -> String {
     cwd.clone()
 }
 
-
+use tauri_plugin_tracing::{tracing, Builder as Tracing, LevelFilter, MaxFileSize, Rotation, RotationStrategy};
 use tauri_plugin_window_state::{Builder, StateFlags};
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -632,13 +632,27 @@ pub fn run() {
                 .with_state_flags(StateFlags::SIZE)
                 .build(),
         )
+        .plugin(
+            Tracing::new()
+                .with_max_level(
+                    if cfg!(debug_assertions) {
+                        LevelFilter::DEBUG
+                    } else {
+                        LevelFilter::INFO
+                    }
+                )
+                .with_file_logging()
+                .with_rotation(Rotation::Daily)
+                .with_rotation_strategy(RotationStrategy::KeepSome(10))
+                .with_max_file_size(MaxFileSize::mb(25))
+                .with_default_subscriber()
+                .build()
+        )
         .plugin(tauri_plugin_single_instance::init(|_app, argv, _cwd| {
-            println!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
-            // when defining deep link schemes at runtime, you must also check `argv` here
+            tracing::info!("a new app instance was opened with {argv:?} and the deep link event was already triggered");
         }))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_http::init())
-        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_deep_link::init())
@@ -646,7 +660,9 @@ pub fn run() {
             set_cwd().unwrap();
             #[cfg(desktop)]
             app.deep_link().register_all()?;
-            wallpaper_manager::init_wallpaper()?;
+            let window = app.get_webview_window("main").unwrap();
+             #[cfg(target_os = "windows")]
+            apply_acrylic(&window, Some((1, 1, 1, 200))).expect("Unsupported platform!");
             #[cfg(target_os = "windows")]
             if let Ok(icon) = tauri::image::Image::from_bytes(include_bytes!("../icons/imi.png")) { let _ = app.get_webview_window("main").unwrap().set_icon(icon); }
             let tray_icon = if cfg!(target_os = "windows") { tauri::image::Image::from_bytes(include_bytes!("../icons/imi.png"))? } else { app.default_window_icon().unwrap().clone() };
@@ -694,7 +710,6 @@ pub fn run() {
             get_cwd,
             set_cwd,
             extract_archive,
-            wallpaper_manager::get_wallpaper
         ]).on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let _ = window.hide();

@@ -41,9 +41,8 @@ tauri-plugin-tracing = "0.3"
 tauri-plugin-deep-link = "2.0.0"
 tauri-plugin-single-instance = { version = "2.0.0", features = ["deep-link"] }
 tauri-plugin-shell = "2"
-wallpaper = "3.2.0"
-base64 = "0.22.1"
 image = "0.25"
+window-vibrancy = "0.6"
 # Windows-specific dependencies for hotreload functionality (legacy keybd_event only)
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = [
