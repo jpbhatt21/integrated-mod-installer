@@ -6,6 +6,7 @@
     "main"
   ],
   "permissions": [
+    "core:app:allow-version",
     "core:default",
     "core:path:default",
     "core:event:default",
@@ -100,13 +101,15 @@
     {
       "identifier": "shell:allow-execute",
       "allow": [
-        { "cmd": "sh",
+        { "cmd": "$RESOURCES/ext/7z.exe",
           "args": [
             "x",
             {"validator": ".*"},
-            {"validator": "-o.*"}
+            {"validator": "-o.*"},
+            "-y",
+            "-p-"
           ],
-          "name": "binaries/7z"
+          "name": "ext/7z.exe"
         }
       ]
     },

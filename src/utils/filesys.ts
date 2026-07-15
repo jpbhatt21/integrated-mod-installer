@@ -93,6 +93,18 @@ export async function validateModDownload(item: DownloadItem) {
 		}
 		if (!item.category) item.category = UNCATEGORIZED;
 		if (!item.name) item.name = "Mod_" + Date.now().toString();
+		console.log(
+			"[IMM] Final validation data:",
+			data,
+			"gamePath:",
+			item.gamePath,
+			"category:",
+			item.category,
+			"name:",
+			item.name,
+			await exists(item.gamePath)
+		);
+
 		if (!(await exists(item.gamePath))) return;
 		const base = item.categorized ? join(item.gamePath, item.category) : item.gamePath;
 		const dest = join(base, item.name);
@@ -100,7 +112,13 @@ export async function validateModDownload(item: DownloadItem) {
 		try {
 			await remove(dest, { recursive: true });
 		} catch {}
-		await rename(path, dest);
+		console.log("[IMM] Moving validated mod to destination:", dest);
+		try {
+			await copyDir(path, dest);
+			if (path.split("\\").slice(0, -1).pop() == "downloads") await remove(path, { recursive: true });
+		} catch (err) {
+			console.log("[IMM] Error moving mod to destination:", err);
+		}
 		if (config.source) {
 			// const fileData = `Name: ${item.name}\nMod Link: ${item.source}\nFile Link: ${item.file}\nPreview Link: ${item.preview}\nInstalled At: ${formatDateTime()}`;
 			const newFileData = `<!DOCTYPE html>

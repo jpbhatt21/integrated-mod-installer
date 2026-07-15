@@ -37,6 +37,8 @@ export interface DownloadItem {
 	key: string;
 	gamePath:string;
 	categorized?: boolean;
+	dlPath?: string;
+	error?: string;
 }
 export interface DownloadList {
 	queue: DownloadItem[];

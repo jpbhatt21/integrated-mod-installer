@@ -15,7 +15,7 @@ import { useAtom, useAtomValue } from "jotai";
 import { CATEGORIES, CONFIG, DOWNLOAD_LIST, store } from "./utils/vars";
 import { DownloadItem, Games, OnlineMod } from "./utils/types";
 import { GAME_GB_IDS, GAME_NAMES, UNCATEGORIZED } from "./utils/consts";
-import { exists } from "@tauri-apps/plugin-fs";
+import { exists, remove } from "@tauri-apps/plugin-fs";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { AlertDialogContent } from "./components/ui/alert-dialog";
 import { listen } from "@tauri-apps/api/event";
@@ -71,6 +71,40 @@ function App() {
 			text: HTMLDivElement | null;
 		};
 	}>({});
+	const activeDownloadsRef = useRef<Record<string, DownloadItem>>({});
+	const extractingDownloadsRef = useRef<Record<string, DownloadItem>>({});
+	const launchingDownloadsRef = useRef(false);
+
+	function clearStoredDownload(key: string) {
+		const stored = JSON.parse(sessionStorage.getItem("downloads") || "{}");
+		delete stored[key];
+		sessionStorage.setItem("downloads", JSON.stringify(stored));
+	}
+
+	function markDownloadFailed(key: string, message: string) {
+		const current = store.get(DOWNLOAD_LIST);
+		const failedItem =
+			activeDownloadsRef.current[key] ||
+			extractingDownloadsRef.current[key] ||
+			current.downloading.find((item) => item.key === key) ||
+			current.extracting.find((item) => item.key === key);
+		if (!failedItem) return;
+		if (failedItem.dlPath) remove(failedItem.dlPath, { recursive: true }).catch(() => {});
+
+		delete activeDownloadsRef.current[key];
+		delete extractingDownloadsRef.current[key];
+		delete elementRefs.current[key];
+		delete prev[key];
+		clearStoredDownload(key);
+		setDownloads((downloads) => ({
+			...downloads,
+			downloading: downloads.downloading.filter((item) => item.key !== key),
+			extracting: downloads.extracting.filter((item) => item.key !== key),
+			failed: downloads.failed.some((item) => item.key === key)
+				? downloads.failed
+				: [...downloads.failed, { ...failedItem, status: "failed", error: message }],
+		}));
+	}
 	async function modExists(
 		root: string,
 		item: DownloadItem,
@@ -194,6 +228,9 @@ function App() {
 		});
 	}
 	async function startDownload(item: DownloadItem) {
+		const dlPath = join("downloads", item.key);
+		const downloadItem = { ...item, dlPath, status: "downloading" as const };
+		activeDownloadsRef.current[item.key] = downloadItem;
 		prev[item.key] = {
 			perct: 0,
 			text: "",
@@ -204,27 +241,33 @@ function App() {
 			invoke("download_and_unzip", {
 				fileName: "preview",
 				downloadUrl: item.preview,
-				savePath: item.gamePath,
-				key: item.key,
+				savePath: dlPath,
+				key: "link_preview_" + item.key,
 				emit: false,
-			});
+			}).catch(() => {});
 		}
 		const downloads = JSON.parse(sessionStorage.getItem("downloads") || "{}");
 		downloads[item.key] = {
-			...item,
-			status: "downloading",
+			...downloadItem,
 		};
 		sessionStorage.setItem("downloads", JSON.stringify(downloads));
 		invoke("download_and_unzip", {
 			fileName: item.name,
 			downloadUrl: item.file,
-			savePath: item.gamePath,
+			savePath: dlPath,
 			key: item.key,
 			emit: true,
-		});
+		}).catch((error) => markDownloadFailed(item.key, String(error)));
 	}
 	useEffect(() => {
 		const prevDownloads = JSON.parse(sessionStorage.getItem("downloads") || "{}");
+		const eventUnlisteners: Array<() => void> = [];
+		let disposed = false;
+		const addListener = async (eventName: string, handler: (event: any) => void | Promise<void>) => {
+			const unlistenEvent = await listen(eventName, handler);
+			if (disposed) unlistenEvent();
+			else eventUnlisteners.push(unlistenEvent);
+		};
 
 		function onWindowFocus() {
 			let bg = document.getElementById("bg-img");
@@ -256,7 +299,7 @@ function App() {
 			});
 		};
 		initDeepLink();
-		listen("download-progress", (event) => {
+		addListener("download-progress", (event) => {
 			const payload = event.payload as any;
 			const total = payload.total as number;
 			const downloaded = payload.downloaded as number;
@@ -277,7 +320,8 @@ function App() {
 					lastUpdate: 0,
 				};
 			}
-			prev[key].perct = ((downloaded / total) * 100).toFixed(2) as unknown as number;
+			if (!prev[key]) return;
+			prev[key].perct = total > 0 ? Number(((downloaded / total) * 100).toFixed(2)) : 0;
 			prev[key].text =
 				` • ${prev[key].perct}% (${formatBytes(downloaded)}/${formatBytes(total)}) • ${payload.speed} • ${
 					payload.eta
@@ -291,17 +335,23 @@ function App() {
 			}
 			if (elementRefs.current[key]?.background) elementRefs.current[key].background.style.width = prev[key].perct + "%";
 		});
-		listen("ext", (event) => {
+		addListener("ext", (event) => {
 			const payload = event.payload as any;
 			const key = payload.key as string;
 			setDownloads((prev) => {
-				const downloadElement = prev.downloading.find((item: any) => item.key === key) || prevDownloads[key];
+				const downloadElement =
+					activeDownloadsRef.current[key] ||
+					prev.downloading.find((item: any) => item.key === key) ||
+					prevDownloads[key];
 				prev.downloading = prev.downloading.filter((item: any) => item.key !== key);
 				if (downloadElement?.key) {
-					prev.extracting.push({
+					const extractingElement = {
 						...downloadElement,
-						status: "extracting",
-					});
+						status: "extracting" as const,
+					};
+					extractingDownloadsRef.current[key] = extractingElement;
+					delete activeDownloadsRef.current[key];
+					prev.extracting.push(extractingElement);
 				}
 				return {
 					...prev,
@@ -314,7 +364,7 @@ function App() {
 				delete prev[key];
 			}
 		});
-		listen("can", (event) => {
+		addListener("can", (event) => {
 			const payload = event.payload as any;
 			const key = payload.key as string;
 			if (elementRefs.current[key]) {
@@ -329,7 +379,7 @@ function App() {
 				sessionStorage.setItem("downloads", JSON.stringify(downloads));
 			}
 		});
-		listen("fin", async (event) => {
+		addListener("fin", async (event) => {
 			const payload = event.payload as any;
 			const key = payload.key as string;
 			const type = payload.type || ("auto" as string);
@@ -337,32 +387,42 @@ function App() {
 			if (type == "auto") {
 			} else if (type == "manual") {
 			}
+			const current = store.get(DOWNLOAD_LIST);
+			const finishedElement = JSON.parse(
+				JSON.stringify(
+					extractingDownloadsRef.current[key] ||
+						current.extracting.find((item) => item.key === key) ||
+						prevDownloads[key] ||
+						{}
+				)
+			) as DownloadItem;
+			delete extractingDownloadsRef.current[key];
+			if (finishedElement?.key) {
+				finishedElement.status = "completed";
+				finishedElement.categorized = store.get(CONFIG).categorized;
+				await validateModDownload({ ...finishedElement });
+			}
 			setDownloads((prev) => {
-				const finishedElement = JSON.parse(
-					JSON.stringify(prev.extracting?.find((item: any) => item.key === key) || prevDownloads[key] || {})
-				) as DownloadItem;
 				prev.extracting = prev.extracting?.filter((item: any) => item.key !== key) || [];
 				if (finishedElement?.key) {
-					finishedElement.status = "completed";
-					finishedElement.categorized = store.get(CONFIG).categorized;
 					prev.completed.push({
 						...finishedElement,
 					});
-					console.log(finishedElement);
-					validateModDownload({ ...finishedElement });
 				}
 				return {
 					...prev,
 				};
 			});
-			const downloads = JSON.parse(sessionStorage.getItem("downloads") || "{}");
-			if (downloads[key]) {
-				delete downloads[key];
-				sessionStorage.setItem("downloads", JSON.stringify(downloads));
-			}
+			clearStoredDownload(key);
 			return;
 		});
+		addListener("download-error", (event) => {
+			const payload = event.payload as any;
+			markDownloadFailed(payload.key || "", payload.message || payload.stage || "Download failed");
+		});
 		return () => {
+			disposed = true;
+			eventUnlisteners.forEach((unlistenEvent) => unlistenEvent());
 			if (unlisten) unlisten();
 			window.removeEventListener("focus", onWindowFocus);
 			window.removeEventListener("blur", onWindowBlur);
@@ -385,16 +445,19 @@ function App() {
 		}
 	};
 	useEffect(() => {
-		if (downloads.downloading.length < config.concDl && downloads.queue.length > 0) {
-			const next = downloads.queue[0];
-			setDownloads((prev: any) => {
-				prev.downloading.push(next);
-				prev.queue = prev.queue.filter((item: any) => item.key !== next.key);
-				return { ...prev };
-			});
-			startDownload(next);
-		}
-	}, [downloads]);
+		if (launchingDownloadsRef.current || downloads.queue.length === 0) return;
+		const slots = Math.max(0, Math.max(1, config.concDl || 1) - downloads.downloading.length);
+		if (slots === 0) return;
+		const nextItems = downloads.queue.slice(0, slots);
+		launchingDownloadsRef.current = true;
+		setDownloads((prev) => ({
+			...prev,
+			queue: prev.queue.slice(nextItems.length),
+			downloading: [...prev.downloading, ...nextItems.map((item) => ({ ...item, status: "downloading" as const }))],
+		}));
+		nextItems.forEach(startDownload);
+		launchingDownloadsRef.current = false;
+	}, [downloads.queue.length, downloads.downloading.length, config.concDl]);
 	return (
 		<div className=" fixed top-0 flex flex-col w-full h-screen overflow-hidden">
 			<div className="fixed flex w-full h-full pt-8">
