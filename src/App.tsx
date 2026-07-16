@@ -1,6 +1,6 @@
 import "./App.css";
-import ToastProvider from "./_Toaster/ToastProvider";
-import { AudioLinesIcon, HardDriveDownloadIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
+import ToastProvider, { addToast } from "./_Toaster/ToastProvider";
+import { AudioLinesIcon, GlobeIcon, HardDriveDownloadIcon, RefreshCcwIcon, SettingsIcon } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
@@ -20,7 +20,8 @@ import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { AlertDialogContent } from "./components/ui/alert-dialog";
 import { listen } from "@tauri-apps/api/event";
 import { validateModDownload } from "./utils/filesys";
-type Page = "dashboard" | "settings" | "updates";
+import Browse from "./pages/browser/Browse";
+type Page = "dashboard" | "settings" | "updates" | "browse";
 interface Action {
 	title: string;
 	type: "destructive" | "warn" | "success" | "default";
@@ -35,6 +36,11 @@ interface PendingAction {
 const appWindow = getCurrentWindow();
 
 const navItems = [
+	{
+		id: "browse" as Page,
+		label: "Browse",
+		icon: <GlobeIcon />,
+	},
 	{
 		id: "dashboard" as Page,
 		label: "Downloads",
@@ -122,7 +128,7 @@ function App() {
 		}
 		return res;
 	}
-	async function addToDownloads(url: string, ele?: any) {
+	async function addToDownloads(url: string, ele?: any, mode = "default") {
 		const game: Games = ele ? ele.game : GAME_GB_IDS[url.split("game/").pop()?.split("/").shift() as any] || "";
 		if (!ele) {
 			const mod = url.split("mods/").pop()?.split("/").shift() || "";
@@ -149,6 +155,8 @@ function App() {
 				fname,
 				name: sanitizeFileName(item._sName),
 			};
+		} else {
+			ele.category = categories[game]?.find((cat) => cat._sName == ele.category)?._sName || UNCATEGORIZED;
 		}
 
 		const addToQueue = config.paths[game] && config.paths[game] != "" && (await exists(config.paths[game]));
@@ -156,55 +164,65 @@ function App() {
 			ele.gamePath = config.paths[game];
 			const root = join(ele.gamePath, config.categorized ? ele.category : "");
 			if (await modExists(root, ele, config.categorized)) {
-				setPendingActions((prev) => [
-					...prev,
-					{
-						title: "Mod Already Exists",
-						type: "warn",
-						description: `The mod "${ele.name}" already exists in the directory for ${GAME_NAMES[game]}.`,
-						actions: [
-							{
-								title: "Skip Mod",
-								type: "default",
-								func: async () => {},
-							},
-							{
-								title: "Overwrite & Update",
-								type: "destructive",
-								func: async () => {
-									setDownloads((prev: any) => {
-										prev.queue.push(ele);
-										return { ...prev };
-									});
+				if (mode == "default") {
+					setPendingActions((prev) => [
+						...prev,
+						{
+							title: "Mod Already Exists",
+							type: "warn",
+							description: `The mod "${ele.name}" already exists in the directory for ${GAME_NAMES[game]}.`,
+							actions: [
+								{
+									title: "Skip Mod",
+									type: "default",
+									func: async () => {},
 								},
-							},
-							{
-								title: "Rename & Install",
-								type: "success",
-								func: async () => {
-									let counter = 1;
-									const initialName = ele.name;
-									const categorized = config.categorized;
-									const downloads = store.get(DOWNLOAD_LIST);
-									while (await modExists(root, ele, categorized, downloads)) {
-										ele.name = `${initialName} (${counter})`;
-										counter++;
-									}
-									setDownloads((prev: any) => {
-										prev.queue.push(ele);
-										return { ...prev };
-									});
+								{
+									title: "Overwrite & Update",
+									type: "destructive",
+									func: async () => {
+										setDownloads((prev: any) => {
+											prev.queue.push(ele);
+											return { ...prev };
+										});
+									},
 								},
-							},
-						],
-					},
-				]);
-				return;
+								{
+									title: "Rename & Install",
+									type: "success",
+									func: async () => {
+										let counter = 1;
+										const initialName = ele.name;
+										const categorized = config.categorized;
+										const downloads = store.get(DOWNLOAD_LIST);
+										while (await modExists(root, ele, categorized, downloads)) {
+											ele.name = `${initialName} (${counter})`;
+											counter++;
+										}
+										setDownloads((prev: any) => {
+											prev.queue.push(ele);
+											return { ...prev };
+										});
+									},
+								},
+							],
+						},
+					]);
+					return;
+				} else if (mode == "rename") {
+					while (await modExists(root, ele, config.categorized)) {
+						ele.name = `${ele.name} (${Date.now()})`;
+					}
+				}
 			}
 		}
 		setDownloads((prev: any) => {
 			if (addToQueue) {
 				prev.queue.push(ele);
+				addToast({
+					message: `Added "${ele.name}" to the download queue for ${GAME_NAMES[game]}.`,
+					type: "success",
+				});
 			} else {
 				prev.failed.push(ele);
 				setCurrentPage("settings");
@@ -260,6 +278,9 @@ function App() {
 		}).catch((error) => markDownloadFailed(item.key, String(error)));
 	}
 	useEffect(() => {
+		sessionStorage.setItem("minimizeToTray", config.minimizeToTray ? "true" : "false");
+	}, [config]);
+	useEffect(() => {
 		const prevDownloads = JSON.parse(sessionStorage.getItem("downloads") || "{}");
 		const eventUnlisteners: Array<() => void> = [];
 		let disposed = false;
@@ -278,7 +299,6 @@ function App() {
 			bg && (bg.style.opacity = "0");
 		}
 
-	
 		let unlisten: (() => void) | undefined;
 		const initDeepLink = async () => {
 			const initialUrls = await getCurrent();
@@ -418,6 +438,7 @@ function App() {
 		});
 		addListener("download-error", (event) => {
 			const payload = event.payload as any;
+			console.log(`Download error for key: ${payload.key} with message: ${payload.message || payload.stage}`);
 			markDownloadFailed(payload.key || "", payload.message || payload.stage || "Download failed");
 		});
 		return () => {
@@ -440,6 +461,8 @@ function App() {
 				return <Settings />;
 			case "updates":
 				return <Updates />;
+			case "browse":
+				return <Browse addToDownloads={addToDownloads} />;
 			default:
 				return <Dashboard elementRefs={elementRefs} prev={prev} addToDownloads={addToDownloads} />;
 		}
@@ -496,41 +519,6 @@ function App() {
 							</svg>
 						</div>
 					</div>
-{/* <div className="border-border bg-black flex flex-col w-80 h-full">
-					
-					<div className="text-accent flex flex-col items-center justify-center py-2 pl-1 -mt-6 text-xs">
-						<div className="text-accent p-4 pt-4 pb-3 pr-4.25 pl-2.75 ml-20 bg-input flex items-center justify-center w-14 h-14 scale-300 my-20 rounded">
-							
-							<AudioLinesIcon className="min-w-4 min-h-4 absolute opacity-20 ml-5 text-foreground z-0 -mt-4 scale-y-200 rotate-45" />
-							<svg
-								width="800px"
-								height="800px"
-								viewBox="0 0 100 100"
-								xmlns="http://www.w3.org/2000/svg"
-								aria-hidden="true"
-								role="img"
-								className={`iconify z-1 iconify--gis ${downloads.downloading.length > 0 ? "animate-pulse" : ""}`}
-								preserveAspectRatio="xMidYMid meet"
-							>
-								<path
-									d="M49.945-.172c-.742-.004-1.149.502-1.263 1.094L37.764 37.764C25.443 41.41 13.113 45.04.814 48.717c-.64.192-.988.574-.986 1.252c.002.677.597 1.082 1.149 1.252l36.75 10.888c3.66 12.363 7.3 24.736 10.99 37.077c.192.64.574.988 1.252.986c.677-.002 1.082-.597 1.252-1.149l10.925-36.875l36.915-10.937c.734-.239 1.107-.524 1.11-1.266c.005-.742-.501-1.149-1.093-1.263L62.111 37.727L51.211.939c-.239-.734-.524-1.107-1.266-1.11zm0 14.432l7.373 24.886a5 5 0 0 0 3.373 3.374l25.047 7.423l-25.011 7.41a5 5 0 0 0-3.373 3.376l-7.409 25.003c-2.475-8.344-4.95-16.686-7.424-25.043a5 5 0 0 0-3.373-3.375l-24.877-7.37c8.301-2.463 16.6-4.925 24.913-7.385a5 5 0 0 0 3.375-3.375z"
-									fill="currentColor"
-									fill-rule="evenodd"
-								></path>
-								<path
-									d="M50 40a10 10 0 0 1 10 10a10 10 0 0 1-10 10a10 10 0 0 1-10-10a10 10 0 0 1 10-10z"
-									fill="currentColor"
-									fill-rule="evenodd"
-								></path>
-								<path
-									d="M84.596 14.1a1.434 1.434 0 0 0-.825.265l-21.113 11.46c.821 2.928 1.677 5.835 2.65 8.677l8.86 2.625l11.379-20.961c.35-.689.412-1.154-.11-1.682c-.26-.263-.552-.378-.841-.384zm-69.301.007c-.262.027-.511.155-.75.395c-.478.48-.342 1.187-.072 1.697l11.404 21.008c2.913-.817 5.812-1.668 8.66-2.637l2.621-8.843c-7.009-3.81-14.018-7.63-21.031-11.415c-.295-.158-.57-.231-.832-.205zm58.877 48.545c-2.98.832-5.93 1.7-8.8 2.694c-.853 2.925-1.73 5.845-2.602 8.765l21.064 11.436c.689.35 1.154.412 1.682-.11c.527-.521.456-1.166.119-1.666L74.172 62.652zm-48.39.086c-3.83 7.044-7.666 14.085-11.47 21.133c-.317.59-.29 1.106.19 1.584s1.187.342 1.697.072l21.008-11.404c-.828-2.956-1.691-5.897-2.674-8.787c-2.92-.85-5.836-1.727-8.752-2.598z"
-									fill="var(--muted-foreground)"
-									fill-rule="evenodd"
-								></path>
-							</svg>
-						</div>
-					</div> */}
-					{/* Navigation */}
 
 					<div className="z-20 flex flex-col items-center w-full h-full gap-1 p-2 pl-3 font-bold pointer-events-auto">
 						{navItems.map((item) => (
@@ -545,11 +533,10 @@ function App() {
 								onClick={() => setCurrentPage(item.id)}
 							>
 								<div
-								className="duration-300"
-								style={{
+									className="duration-300"
+									style={{
 										transform: currentPage == item.id ? "scale(1.15)" : "scale(1)",
-									
-								}}
+									}}
 								>
 									{item.icon}
 								</div>

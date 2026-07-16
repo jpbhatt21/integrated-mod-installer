@@ -1,4 +1,4 @@
-export type Games = "WW" | "ZZ" | "GI" | "SR" | "EF" | ""; //| "GI" ;
+export type Games = "WW" | "ZZ" | "GI" | "SR" | "EF" | "";
 export type Language = "en" | "cn" | "ru" | "jp" | "kr" | "";
 export interface DirEntry {
 	name: string;

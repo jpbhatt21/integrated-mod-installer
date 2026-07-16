@@ -1,12 +1,12 @@
 import { open } from "@tauri-apps/plugin-dialog";
-import { copyFile, exists, mkdir, readDir, remove, rename, writeTextFile } from "@tauri-apps/plugin-fs";
+import { copyFile, exists, mkdir, readDir, readTextFile, remove, rename, writeTextFile } from "@tauri-apps/plugin-fs";
 import { join } from "./utils";
 import { error, info } from "@/lib/logger";
-import { exts, GAME_NAMES, UNCATEGORIZED } from "./consts";
-import { CONFIG, DOWNLOAD_LIST, store } from "./vars";
+import { exts, GAME_NAMES, managedSRC, managedTGT, UNCATEGORIZED } from "./consts";
+import { CATEGORIES, CONFIG, DOWNLOAD_LIST, store } from "./vars";
 import { openPath } from "@tauri-apps/plugin-opener";
 import { invoke } from "@tauri-apps/api/core";
-import { DownloadItem } from "./types";
+import { DownloadItem, Games } from "./types";
 
 export async function selectPath(
 	options = { multiple: false, directory: false } as {
@@ -54,7 +54,48 @@ async function copyDir(src: string, dest: string, withProgress = false) {
 		}
 	} catch (error) {}
 }
-
+export async function findTargets(link: string, game: Games) {
+	const gameDir = store.get(CONFIG).paths[game];
+	if (!gameDir || !link) return [];
+	const categories = store.get(CATEGORIES)[game];
+	const targets = [] as Record<string, string>[];
+	const entries = await readDir(gameDir);
+	const subs = entries.map(async (entry) => {
+		if (!entry.isDirectory) return;
+		if (entry.name === managedSRC || entry.name === managedTGT) return;
+		if ((categories && categories.length > 0 && categories.some((cat) => cat._sName === entry.name)) || entry.name === UNCATEGORIZED) {
+			const catEnt = await readDir(join(gameDir, entry.name));
+			const subSubs = catEnt.map(async (subEntry) => {
+				if (!subEntry.isDirectory) return;
+				if (await exists(join(gameDir, entry.name, subEntry.name, "open_mod_page.html"))) {
+					const fileContent = await readTextFile(join(gameDir, entry.name, subEntry.name, "open_mod_page.html"));
+					if (fileContent.includes(link)) {
+						targets.push({
+							path: join(gameDir, entry.name, subEntry.name),
+							category: entry.name,
+							name: subEntry.name,
+						});
+					}
+				}
+			});
+			await Promise.all(subSubs);
+			return;
+		}
+		if (await exists(join(gameDir, entry.name, "open_mod_page.html"))) {
+			const fileContent = await readTextFile(join(gameDir, entry.name, "open_mod_page.html"));
+			if (fileContent.includes(link)) {
+				// targets.push(join(gameDir, entry.name));
+				targets.push({
+					name: entry.name,
+					path: join(gameDir, entry.name),
+					category: "",
+				});
+			}
+		}
+	});
+	await Promise.all(subs);
+	return targets;
+}
 export function openFile(relPath: string) {
 	openPath(join(relPath));
 }
@@ -110,7 +151,7 @@ export async function validateModDownload(item: DownloadItem) {
 		const dest = join(base, item.name);
 		await mkdir(base, { recursive: true });
 		try {
-			await remove(dest, { recursive: true });
+			if (item.name && (await exists(dest))) await remove(dest, { recursive: true });
 		} catch {}
 		console.log("[IMM] Moving validated mod to destination:", dest);
 		try {

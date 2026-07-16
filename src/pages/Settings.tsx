@@ -236,7 +236,7 @@ export default function Settings() {
 					/>
 				</CardContent>
 			</Card>
-			<Card className="flex flex-row w-full justify-between">
+			{/* <Card className="flex flex-row w-full justify-between">
 				<CardHeader className="w-full">
 					<CardTitle>Save Mod Source</CardTitle>
 					<CardDescription>
@@ -255,7 +255,7 @@ export default function Settings() {
 						}}
 					/>
 				</CardContent>
-			</Card>
+			</Card> */}
 			<Card>
 				<CardHeader className="w-full">
 					<CardTitle>Mods Directory Structure</CardTitle>

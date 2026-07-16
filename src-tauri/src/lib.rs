@@ -707,6 +707,14 @@ use tauri_plugin_tracing::{
     tracing, Builder as Tracing, LevelFilter, MaxFileSize, Rotation, RotationStrategy,
 };
 use tauri_plugin_window_state::{Builder, StateFlags};
+mod image_server;
+const IMAGE_SERVER_PORT: u16 = 4469;
+
+#[tauri::command]
+fn get_image_server_url() -> String {
+    format!("http://127.0.0.1:{}", IMAGE_SERVER_PORT)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -785,6 +793,30 @@ pub fn run() {
                     _ => {}
                 })
                 .build(app)?;
+            let app_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = image_server::start_image_server(IMAGE_SERVER_PORT).await {
+                    tracing::error!("Failed to start image server: {}", e);
+
+                    if let Err(emit_err) = app_handle.emit(
+                        "image-server-error",
+                        format!("Failed to start image server: {}", e),
+                    ) {
+                        tracing::error!("Failed to emit image server error: {}", emit_err);
+                    }
+                } else {
+                    tracing::info!(
+                        "Image server started successfully on port {}",
+                        IMAGE_SERVER_PORT
+                    );
+
+                    if let Err(emit_err) =
+                        app_handle.emit("image-server-ready", get_image_server_url())
+                    {
+                        tracing::error!("Failed to emit image server ready event: {}", emit_err);
+                    }
+                }
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -1,7 +1,11 @@
 import { Games } from "./types";
+import GAME_DATA from "@/gameData.json";
 export const DISCORD_LINK = "https://discord.gg/QGkKzNapXZ";
 export const BANANA_LINK = "https://gamebanana.com/mods/593490";
 export const UNCATEGORIZED = "Uncategorized";
+export const IMAGE_SERVER = "http://127.0.0.1:4469/preview";
+export const managedSRC = "DISABLED - ALL MODS ARE STORED HERE (Managed by IMM)";
+export const managedTGT = "DO NOT MODIFY (Managed by IMM)";
 export const VERSION = "1.0.0";
 export const GAMES: Games[] = ["WW", "ZZ", "GI", "SR", "EF"];
 export const GAME_GB_IDS: { [key: number]: Games } = {
@@ -30,7 +34,14 @@ export const GAME_ICONS: { [key in Games]: string } = {
 };
 export const exts = ["png", "jpg", "jpeg", "webp", "gif"];
 export const PRIORITY_KEYS = ["Alt", "Ctrl", "Shift", "Capslock", "Tab", "Up", "Down", "Left", "Right"] as const;
-
+export const TYPES = {
+	"WW": GAME_DATA.WW.generic.types,
+	"ZZ": GAME_DATA.ZZ.generic.types,
+	"GI": GAME_DATA.GI.generic.types,
+	"SR": GAME_DATA.SR.generic.types,
+	"EF": GAME_DATA.EF.generic.types,
+	"": [],
+}
 export const GAME_ID_MAP: { [key: string]: number } = {
 	WW: 0,
 	ZZ: 1,

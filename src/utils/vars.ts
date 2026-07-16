@@ -3,7 +3,7 @@ import { atomWithStorage } from "jotai/utils";
 export const store = createStore();
 import defConfig from "../default.json";
 import { VERSION } from "./consts";
-import { Category, DownloadList, Games, Language } from "./types";
+import { Category, DownloadList, Games, Language, OnlineData } from "./types";
 import GAME_DATA from "@/gameData.json";
 interface UpdateInfo {
 	version: string;
@@ -46,7 +46,32 @@ const NOTICE_OPEN = atom(false);
 const FILE_TO_DL = atom("");
 const ERR = atom("");
 const CONFIG = atom(defConfig);
+const BROWSE_SETTINGS = atom({
+	game: "WW",
+	nsfw: 1,
+});
+const BROWSE_TYPE = atom("Mod");
+const BROWSE_PATH = atom("home&_type=Mod");
+const BROWSE_SORT = atom("");
+const BROWSE_SELECTED = atom("");
+const BROWSE_DATA = atom({
+	WW: {} as OnlineData,
+	ZZ: {} as OnlineData,
+	GI: {} as OnlineData,
+	SR: {} as OnlineData,
+	EF: {} as OnlineData,
+	"": {} as OnlineData,
+});
+const BROWSE_RIGHT_SLIDE_OVER_OPEN = atom(false);
+const INIT_DONE = atom(false);
 export {
+	BROWSE_RIGHT_SLIDE_OVER_OPEN,
+	BROWSE_DATA,
+	BROWSE_SETTINGS,
+	BROWSE_TYPE,
+	BROWSE_PATH,
+	BROWSE_SORT,
+	BROWSE_SELECTED,
 	CONFIG,
 	CATEGORIES,
 	FILE_TO_DL,
@@ -59,4 +84,5 @@ export {
 	TOASTS,
 	DOWNLOAD_LIST,
 	SAVED_LANG,
+	INIT_DONE
 };

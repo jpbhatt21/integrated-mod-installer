@@ -1,7 +1,7 @@
 import { apiClient } from "./api";
 import { GAMES } from "./consts";
 import { Category, Games } from "./types";
-import { CATEGORIES, CONFIG, store } from "./vars";
+import { CATEGORIES, CONFIG, ERR, INIT_DONE, store } from "./vars";
 import defConfig from "../default.json";
 import { path } from "@tauri-apps/api";
 import { exists, mkdir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -61,6 +61,7 @@ async function initCategories() {
 		};
 	});
 	const results = await Promise.all(promises);
+	console.log("[IMM] Categories initialized:", results);
 	store.set(CATEGORIES, (prev) => {
 		const newCategories = { ...prev };
 		results.forEach(({ game, categories }: { game: Games; categories: Category[] }) => {
@@ -86,32 +87,38 @@ export async function getModDir(overwrite = false) {
 	if (overwrite) store.set(CONFIG, config);
 }
 export async function main() {
-	initCategories();
-	if ((sessionStorage.getItem("firstLoad") || "true") === "true") {
-		sessionStorage.setItem("firstLoad", "false");
-		remove("downloads", { recursive: true }).finally(() => mkdir("downloads"));
-	}
-	let appData = await path.dataDir();
-	const XXMI = `${appData}\\XXMI Launcher`;
-	if (!(await exists("config.json"))) {
-		await writeTextFile("config.json", JSON.stringify(defConfig, null, 2));
-	}
 	try {
-		config = {
-			...config,
-			...JSON.parse(await readTextFile("config.json")),
-		};
+		store.set(INIT_DONE, false);
+		initCategories();
+		if ((sessionStorage.getItem("firstLoad") || "true") === "true") {
+			sessionStorage.setItem("firstLoad", "false");
+			remove("downloads", { recursive: true }).finally(() => mkdir("downloads"));
+		}
+		let appData = await path.dataDir();
+		const XXMI = `${appData}\\XXMI Launcher`;
+		if (!(await exists("config.json"))) {
+			await writeTextFile("config.json", JSON.stringify(defConfig, null, 2));
+		}
+		try {
+			config = {
+				...config,
+				...JSON.parse(await readTextFile("config.json")),
+			};
+		} catch (e) {
+			config = { ...defConfig };
+		}
+		if ((config.XXMI == "" || !(await exists(config.XXMI))) && (await exists(XXMI))) {
+			config.XXMI = XXMI;
+		}
+		sessionStorage.setItem("minimizeToTray", config.minimizeToTray ? "true" : "false");
+		paths.XX = config.XXMI;
+		await readXXMIConfig(config.XXMI || "");
+		config.version = defConfig.version;
+		await getModDir();
+		await writeTextFile("config.json", JSON.stringify(config, null, 2));
+		store.set(CONFIG, config);
+		store.set(INIT_DONE, true);
 	} catch (e) {
-		config = { ...defConfig };
+		store.set(ERR, `Initialization failed: ${e}`);
 	}
-	if ((config.XXMI == "" || !(await exists(config.XXMI))) && (await exists(XXMI))) {
-		config.XXMI = XXMI;
-	}
-	sessionStorage.setItem("minimizeToTray", config.minimizeToTray ? "true" : "false");	
-	paths.XX = config.XXMI;
-	await readXXMIConfig(config.XXMI || "");
-	config.version = defConfig.version;
-	await getModDir();
-	await writeTextFile("config.json", JSON.stringify(config, null, 2));
-	store.set(CONFIG, config);
 }

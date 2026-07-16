@@ -5,7 +5,7 @@
 	"identifier": "jp.bhatt.imi",
 	"build": {
 		"beforeDevCommand": "npm run dev",
-		"devUrl": "http://localhost:3420",
+		"devUrl": "http://localhost:4420",
 		"beforeBuildCommand": "npm run build",
 		"frontendDist": "../dist"
 	},
@@ -17,7 +17,7 @@
 				"fullscreen": false,
 				"decorations": false,
 				"transparent": true,
-				"minWidth": 720,
+				"minWidth": 1080,
 				"minHeight": 480,
 				"dragDropEnabled": false
 			}
