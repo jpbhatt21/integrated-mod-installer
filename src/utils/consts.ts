@@ -1,5 +1,6 @@
-import { Games } from "./types";
+import { Games, Language } from "./types";
 import GAME_DATA from "@/gameData.json";
+import TEXT from "@/textData.json";
 export const DISCORD_LINK = "https://discord.gg/QGkKzNapXZ";
 export const BANANA_LINK = "https://gamebanana.com/mods/593490";
 export const UNCATEGORIZED = "Uncategorized";
@@ -16,6 +17,33 @@ export const GAME_GB_IDS: { [key: number]: Games } = {
 	21842: "EF",
 	0: "",
 };
+export const LANG_LIST: { Name: string; Flag: string; Code: Language }[] = [
+	{
+		Name: TEXT.en.Current,
+		Flag: TEXT.en.Flag,
+		Code: "en",
+	},
+	{
+		Name: TEXT.cn.Current,
+		Flag: TEXT.cn.Flag,
+		Code: "cn",
+	},
+	{
+		Name: TEXT.ru.Current,
+		Flag: TEXT.ru.Flag,
+		Code: "ru",
+	},
+	{
+		Name: TEXT.jp.Current,
+		Flag: TEXT.jp.Flag,
+		Code: "jp",	
+	},
+	{
+		Name: TEXT.kr.Current,
+		Flag: TEXT.kr.Flag,
+		Code: "kr",
+	},
+];
 export const GAME_NAMES: { [key in Games]: string } = {
 	WW: "WuWa",
 	ZZ: "Z·Z·Z",

@@ -23,7 +23,7 @@ const CATEGORIES = atom({
 	[key in Games]: Category[];
 });
 const FIRST_LOAD = atom(false);
-const SAVED_LANG = atomWithStorage<Language | "">("imm-lang", "");
+const SAVED_LANG = atomWithStorage<Language>("imm-lang", "en");
 const DOWNLOAD_LIST = atom<DownloadList>({
 	queue: [],
 	downloading: [],
@@ -46,7 +46,7 @@ const NOTICE_OPEN = atom(false);
 const FILE_TO_DL = atom("");
 const ERR = atom("");
 const CONFIG = atom(defConfig);
-const BROWSE_SETTINGS = atom({
+const BROWSE_SETTINGS = atomWithStorage("imi-browse-settings", {
 	game: "WW",
 	nsfw: 1,
 });
@@ -84,5 +84,5 @@ export {
 	TOASTS,
 	DOWNLOAD_LIST,
 	SAVED_LANG,
-	INIT_DONE
+	INIT_DONE,
 };

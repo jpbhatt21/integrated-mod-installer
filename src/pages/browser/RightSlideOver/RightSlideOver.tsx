@@ -34,7 +34,7 @@ import {
 	StampIcon,
 	ThumbsDownIcon,
 	ThumbsUpIcon,
-	Trash2Icon
+	Trash2Icon,
 } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -167,7 +167,6 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 	const [installedItems, setInstalledItems] = useState<Record<string, string>[]>([]);
 	const [installedItem, setInstalledItem] = useState<number>(-1);
 	const type = installedItems.length ? "Update/Reinstall" : "Install";
-	console.log(installedItems);
 	useEffect(() => {
 		now = Date.now() / 1000;
 		const controller = new AbortController();
@@ -319,17 +318,17 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 				<div className="flex items-center gap-1">
 					{file._sDescription && file._sDescription.length > 0 && (
 						<Tooltip>
-							<TooltipTrigger>
+							<TooltipTrigger className="flex items-center gap-1">
 								<InfoIcon />
+								<p className="w-52 text-ellipsis brightness-75 wrap-break-word overflow-hidden text-xs resize-none">
+									{file._sDescription}
+								</p>
 							</TooltipTrigger>
-							<TooltipContent className="max-w-64 w-fit text-center">
-								<p className="max-w-64 text-center break-words">{file._sDescription}</p>
+							<TooltipContent className="max-w-64 -mb-5 w-fit text-center" hideArrow>
+								<p className="max-w-64 text-background text-center break-words">{file._sDescription}</p>
 							</TooltipContent>
 						</Tooltip>
 					)}
-					<p className="w-52 text-ellipsis brightness-75 wrap-break-word overflow-hidden text-xs resize-none">
-						{file._sDescription}
-					</p>
 				</div>
 			</div>
 			<div className="min-w-24 flex flex-col items-center">
@@ -448,17 +447,20 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 													<span
 														className={`text-xs rounded py-0.5 px-1 ${typeToBg[stamp._sCategory]} flex items-center justify-center text-background`}
 													>
-														<StampIcons className={" max-h-4"} title={stamp._sTitle} />
-														{stamp._sTitle} {stamp._nCount > 1 ? `x${stamp._nCount}` : ""}
+														<div className="flex items-center justify-center flex-col text-[0.6rem]">
+															<StampIcons className={" max-h-4 min-h-4"} title={stamp._sTitle} />
+															<span>{stamp._nCount > 1 ? `x${stamp._nCount}` : ""}</span>
+														</div>
+														{stamp._sTitle}
 													</span>
 												))}
 												<Tooltip>
 													<TooltipTrigger>
 														<span
-															className={`text-xs rounded px-1 py-0.5 ${typeToBg["neutral"]} flex items-center justify-center text-background`}
+															className={`text-xs rounded h-full px-1 py-0.5 ${typeToBg["neutral"]} flex items-center justify-center text-background`}
 														>
 															{/* <StampIcons className={" max-h-4"} title={stamp._sTitle} /> */}
-															<EllipsisIcon className="h-4" />
+															<EllipsisIcon className="min-h-4 max-h-4" />
 															{/* {stamp._sTitle} {stamp._nCount > 1 ? `x${stamp._nCount}` : ""} */}+
 															{comment._aStamps.length - 3} Stamps
 														</span>
@@ -482,8 +484,11 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 												<span
 													className={`text-xs rounded px-1 py-0.5 ${typeToBg[stamp._sCategory]} flex items-center justify-center text-background`}
 												>
-													<StampIcons className={" max-h-4"} title={stamp._sTitle} />
-													{stamp._sTitle} {stamp._nCount > 1 ? `x${stamp._nCount}` : ""}
+													<div className="flex items-center justify-center flex-col text-[0.6rem]">
+														<StampIcons className={" max-h-4 min-h-4"} title={stamp._sTitle} />
+														<span>{stamp._nCount > 1 ? `x${stamp._nCount}` : ""}</span>
+													</div>
+													{stamp._sTitle}
 												</span>
 											))
 										)}
@@ -519,570 +524,575 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 	return (
 		<AnimatePresence mode="wait">
 			{rightSlideOverOpen && (
-				<motion.div
-					initial={{ translateX: "100%", opacity: 0 }}
-					animate={{ translateX: "0%", opacity: 1 }}
-					exit={{ translateX: "100%", opacity: 0 }}
-					transition={{ duration: 0.3, ease: "linear" }}
-					className="bg-sidebar bgpattern fixed top-8 right-0 z-10 flex flex-col items-center justify-center h-[calc(100vh-2rem)] overflow-hidden border-l"
-					style={{
-						maxWidth: "47vw",
-						width: "50rem",
-						backdropFilter: "blur(var(--blur-sm))",
-						backgroundColor: "color-mix(in oklab, var(--button) 50%, transparent)",
-					}}
-				>
-					<AnimatePresence mode="wait">
-						{!selected ? (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.2 }}
-								key="no-selection"
-								className="text-accent flex items-center justify-center h-full p-4"
-							>
-								No item selected
-							</motion.div>
-						) : !onlineData[game][selected] ? (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.2 }}
-								key="loading"
-								className="text-accent flex items-center justify-center h-full p-4"
-							>
-								<LoaderIcon className="animate-spin" />
-							</motion.div>
-						) : item && (item._bIsPrivate || item._bIsTrashed || item._bIsWithheld) ? (
-							<motion.div
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.2 }}
-								key="loading"
-								className="text-accent flex flex-col items-center justify-center h-full gap-4 p-4"
-							>
-								{
-									{
-										Private: "This mod has been set to private.",
-										Deleted: "This mod has been deleted.",
-										Withheld: "This mod has been withheld.",
-									}[item._bIsPrivate ? "Private" : item._bIsTrashed ? "Deleted" : "Withheld"]
-								}
-								{selected.startsWith("Mod") && (
-									<a
-										href={`https://gamebanana.com/${selected.replace("Mod", "mods")}`}
-										target="_blank"
-										className="text-xs"
-									>
-										Open in browser
-									</a>
-								)}
-							</motion.div>
-						) : (
-							<motion.div
-								key={"loaded" + selected}
-								initial={{ opacity: 0 }}
-								animate={{ opacity: 1 }}
-								exit={{ opacity: 0 }}
-								transition={{ duration: 0.2 }}
-								className="flex flex-col items-center w-full h-full overflow-hidden duration-300"
-							>
-								<div className="text-accent min-h-16 flex items-center justify-start w-full gap-3 px-3 border-b">
-									<div className="min-w-fit trs bg-button zzz-border flex items-center gap-2 p-2 rounded-md">
-										<img
-											className="aspect-square min-w-6 max-w-6 scale-120 ctrs h-full rounded-full pointer-events-none"
-											onError={(e) => {
-												e.currentTarget.src = "/who.jpg";
-											}}
-											src={item._aCategory?._sIconUrl || "err"}
-										/>
-
-										<span className="ctrs">{item._aCategory?._sName.split(" ")[0]}</span>
-									</div>
-
-									<Label key={item._sName} className="w-full text-xl text-center">
-										{item._sName}
-									</Label>
-
-									<Popover open={linkPopoverOpen} onOpenChange={setLinkPopoverOpen}>
-										<PopoverTrigger className="focus-within:outline-none">
-											<div className="min-w-fit button-like ring-transparent outline-transparent aspect-square bg-button zzz-border flex items-center gap-2 p-3 rounded-md">
-												<LinkIcon className="h-4 w-4" />
-											</div>
-										</PopoverTrigger>
-										<PopoverContent className="w-fit bg-sidebar flex flex-col p-2">
-											<Button
-												onClick={() => {
-													navigator.clipboard.writeText(item._sProfileUrl || "");
-													addToast({ type: "success", message: "Link copied to clipboard!" });
-													setLinkPopoverOpen(false);
-													setLinkExistingPopoverOpen(false);
-												}}
-											>
-												Copy Link
-											</Button>
-											<Button
-												className="w-full mt-2"
-												onClick={() => {
-													const a = document.createElement("a");
-													a.href = item._sProfileUrl || "";
-													a.target = "_blank";
-													document.body.appendChild(a);
-													a.click();
-													document.body.removeChild(a);
-													setLinkPopoverOpen(false);
-													setLinkExistingPopoverOpen(false);
-												}}
-											>
-												Open in browser
-											</Button>
-										</PopoverContent>
-									</Popover>
-									<div className="min-w-fit trs bg-button zzz-border flex items-center gap-2 p-2 rounded-md">
-										<img
-											className="aspect-square min-w-6 max-w-6 scale-120 ctrs h-full rounded-full pointer-events-none"
-											onError={(e) => {
-												e.currentTarget.src = "/who.jpg";
-											}}
-											src={item._aSubmitter?._sAvatarUrl || "err"}
-										/>
-
-										<span className="ctrs">{item._aSubmitter?._sName}</span>
-									</div>
-								</div>
-
-								<div
-									id="container"
-									className="flex flex-col w-full pb-2 mb-24 overflow-hidden overflow-y-scroll"
-									onScroll={() => {
-										if (popover2Ref.current) {
-											clearTimeout(popover2Ref.current);
-											popover2Ref.current = null;
-										}
-										setPopover2Open(true);
-										popover2Ref.current = setTimeout(() => {
-											setPopover2Open(false);
-										}, 2000);
-									}}
+				<>
+					<motion.div
+						key="right-slide-over"
+						initial={{ translateX: "100%", opacity: 0 }}
+						animate={{ translateX: "0%", opacity: 1 }}
+						exit={{ translateX: "100%", opacity: 0 }}
+						transition={{ duration: 0.3, ease: "linear" }}
+						className="max-w-[47vw] w-200 backdrop-blur-sm bg-button/50 bgpattern fixed top-8 right-0 z-10 flex flex-col items-center justify-center h-[calc(100vh-2rem)] overflow-hidden border-l"
+					>
+						<AnimatePresence mode="wait">
+							{!selected ? (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.2 }}
+									key="no-selection"
+									className="text-accent flex items-center justify-center h-full p-4"
 								>
-									<div
-										key={item._sName + "pix"}
-										className="min-h-fit flex flex-col items-center w-full max-h-full gap-1 px-2 mt-2 mb-3 overflow-hidden pointer-events-none"
-									>
-										{item._aPreviewMedia && item._aPreviewMedia._aImages && item._aPreviewMedia._aImages.length > 0 && (
-											<Carousel data={item._aPreviewMedia._aImages} />
-										)}
-									</div>
-									{item._sText && (
-										<Collapsible
-											key={item._sName + "abt"}
-											id="about"
-											className="w-full px-2 pb-3"
-											open={aboutOpen}
-											onOpenChange={(open) => {
-												setAboutOpen(open);
-												if (open) setLastSelected("about");
-											}}
+									No item selected
+								</motion.div>
+							) : !onlineData[game][selected] ? (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.2 }}
+									key="loading"
+									className="text-accent flex items-center justify-center h-full p-4"
+								>
+									<LoaderIcon className="animate-spin" />
+								</motion.div>
+							) : item && (item._bIsPrivate || item._bIsTrashed || item._bIsWithheld) ? (
+								<motion.div
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.2 }}
+									key="loading"
+									className="text-accent flex flex-col items-center justify-center h-full gap-4 p-4"
+								>
+									{
+										{
+											Private: "This mod has been set to private.",
+											Deleted: "This mod has been deleted.",
+											Withheld: "This mod has been withheld.",
+										}[item._bIsPrivate ? "Private" : item._bIsTrashed ? "Deleted" : "Withheld"]
+									}
+									{selected.startsWith("Mod") && (
+										<a
+											href={`https://gamebanana.com/${selected.replace("Mod", "mods")}`}
+											target="_blank"
+											className="text-xs"
 										>
-											<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
-												<Button
-													className={
-														"w-full flex justify-between bg-accent bgaccent   text-background " +
-														(aboutOpen
-															? "hover:brightness-125"
-															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
-													}
-												>
-													About{" "}
-													<ChevronDownIcon
-														id="deschev"
-														className=" transform-[roate(180deg)] duration-200"
-														style={{ transform: aboutOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-													/>
-												</Button>
-											</CollapsibleTrigger>
-											<CollapsibleContent className="border-accent w-full pt-2 pl-2 mt-2">
-												<div
-													className="w-full font-sans"
-													dangerouslySetInnerHTML={{ __html: sanitizeRemoteHtml(item._sText) }}
-												></div>
-											</CollapsibleContent>
-										</Collapsible>
+											Open in browser
+										</a>
 									)}
-									{item._eUpdate && (
-										<Collapsible
-											key={item._sName + "upd"}
-											id="updates"
-											className=" w-full px-2 pb-3"
-											open={updateOpen}
-											onOpenChange={(open) => {
-												setUpdateOpen(open);
-												if (open) setLastSelected("update");
-											}}
-										>
-											<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
-												<Button
-													className={
-														"w-full flex justify-between bg-accent bgaccent   text-background " +
-														(updateOpen
-															? "hover:brightness-125"
-															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
-													}
-												>
-													Updates{" "}
-													<ChevronDownIcon
-														id="deschev"
-														className=" transform-[roate(180deg)] duration-200"
-														style={{ transform: updateOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-													/>
-												</Button>
-											</CollapsibleTrigger>
-											<CollapsibleContent className="border-accent flex flex-col w-full gap-4  pt-2 mt-2">
-												{item._aUpdates &&
-													item._aUpdates.length > 0 &&
-													item._aUpdates.map((itm: any, index: number) => (
-														<>
-															{index > 0 && <hr className="border-accent/50" />}
+								</motion.div>
+							) : (
+								<motion.div
+									key={"loaded" + selected}
+									initial={{ opacity: 0 }}
+									animate={{ opacity: 1 }}
+									exit={{ opacity: 0 }}
+									transition={{ duration: 0.2 }}
+									className="flex flex-col items-center w-full h-full overflow-hidden duration-300"
+								>
+									<div className="text-accent min-h-16 flex items-center justify-start w-full gap-3 px-3 border-b">
+										<div className="min-w-fit trs bg-input/50 flex items-center gap-2 p-2 rounded-md">
+											<img
+												className="aspect-square min-w-6 max-w-6 scale-120 ctrs h-full rounded-full pointer-events-none"
+												onError={(e) => {
+													e.currentTarget.src = "/who.jpg";
+												}}
+												src={item._aCategory?._sIconUrl || "err"}
+											/>
 
-															<div className="flex rounded flex-col gap-2 bg-input/10 p-2">
-																<div className="text-accent flex items-center justify-between pb-4 border-b">
-																	{itm._sName}
-																	<label className="flex flex-col text-xs text-gray-300">
-																		{" "}
-																		<label>{itm._sVersion}</label>{" "}
-																		<label className=" text-cyan-200">{getTimeDifference(now, itm._sDate || 0)}</label>
-																	</label>
-																</div>
-																<div className=" flex flex-col gap-2">
-																	{itm._aChangeLog &&
-																		itm._aChangeLog.map((changeItem: any, index: number) => (
-																			<div key={index} className="flex items-center gap-2">
-																				<div className="min-w-2 min-h-2 self-start mt-1.75 bg-accent bgaccent   rounded-full" />
-																				<label className=" text-cyan-50 font-sans text-sm">
-																					{changeItem.text}- [{changeItem.cat}]
-																				</label>
-																			</div>
-																		))}
-																</div>
-																{itm._sText && (
-																	<div
-																		className="w-full font-sans"
-																		dangerouslySetInnerHTML={{ __html: sanitizeRemoteHtml(itm._sText) }}
-																	/>
-																)}
-															</div>
-														</>
-													))}
-											</CollapsibleContent>
-										</Collapsible>
-									)}
-									<Collapsible
-										key={item._sName + "cmt"}
-										id="comments"
-										className="w-full px-2 pb-1"
-										open={commentsOpen}
-										onOpenChange={(open) => {
-											setCommentsOpen(open);
-											setLastSelected("comments");
-											if (open && (!item._aComments || item._aComments.length == 0)) {
-												setLoadingComments(true);
+											<span className="ctrs">{item._aCategory?._sName.split(" ")[0]}</span>
+										</div>
+
+										<Label key={item._sName} className="w-full text-xl text-center">
+											{item._sName}
+										</Label>
+
+										<Popover open={linkPopoverOpen} onOpenChange={setLinkPopoverOpen}>
+											<PopoverTrigger className="focus-within:outline-none bg-input/50 duration-200 rounded-md hover:bg-input">
+												<div className="min-w-fit  aspect-square flex items-center gap-2 p-3">
+													<LinkIcon className="h-4 w-4" />
+												</div>
+											</PopoverTrigger>
+											<PopoverContent className="w-fit bg-sidebar/50 backdrop-blur-md flex flex-col p-2">
+												<Button
+													onClick={() => {
+														navigator.clipboard.writeText(item._sProfileUrl || "");
+														addToast({ type: "success", message: "Link copied to clipboard!" });
+														setLinkPopoverOpen(false);
+														setLinkExistingPopoverOpen(false);
+													}}
+												>
+													Copy Link
+												</Button>
+												<Button
+													className="w-full mt-2"
+													onClick={() => {
+														const a = document.createElement("a");
+														a.href = item._sProfileUrl || "";
+														a.target = "_blank";
+														document.body.appendChild(a);
+														a.click();
+														document.body.removeChild(a);
+														setLinkPopoverOpen(false);
+														setLinkExistingPopoverOpen(false);
+													}}
+												>
+													Open in browser
+												</Button>
+											</PopoverContent>
+										</Popover>
+										<div className="min-w-fit trs bg-input/50 flex items-center gap-2 p-2 rounded-md">
+											<img
+												className="aspect-square min-w-6 max-w-6 scale-120 ctrs h-full rounded-full pointer-events-none"
+												onError={(e) => {
+													e.currentTarget.src = "/who.jpg";
+												}}
+												src={item._aSubmitter?._sAvatarUrl || "err"}
+											/>
+
+											<span className="ctrs">{item._aSubmitter?._sName}</span>
+										</div>
+									</div>
+
+									<div
+										id="container"
+										className="flex flex-col w-full pb-2 mb-24 overflow-hidden overflow-y-scroll"
+										onScroll={() => {
+											if (popover2Ref.current) {
+												clearTimeout(popover2Ref.current);
+												popover2Ref.current = null;
 											}
+											setPopover2Open(true);
+											popover2Ref.current = setTimeout(() => {
+												setPopover2Open(false);
+											}, 2000);
 										}}
 									>
-										<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
-											<Button
-												className={
-													"w-full flex justify-between bg-accent bgaccent   text-background " +
-													(commentsOpen
-														? "hover:brightness-125"
-														: "bg-input/50 text-accent hover:text-accent hover:bg-input")
-												}
+										<div
+											key={item._sName + "pix"}
+											className="min-h-fit flex flex-col items-center w-full max-h-full gap-1 px-2 mt-2 mb-3 overflow-hidden pointer-events-none"
+										>
+											{item._aPreviewMedia &&
+												item._aPreviewMedia._aImages &&
+												item._aPreviewMedia._aImages.length > 0 && <Carousel data={item._aPreviewMedia._aImages} />}
+										</div>
+										{item._sText && (
+											<Collapsible
+												key={item._sName + "abt"}
+												id="about"
+												className="w-full px-2 pb-3"
+												open={aboutOpen}
+												onOpenChange={(open) => {
+													setAboutOpen(open);
+													if (open) setLastSelected("about");
+												}}
 											>
-												Comments{" "}
-												<ChevronDownIcon
-													id="deschev"
-													className=" transform-[roate(180deg)] duration-200"
-													style={{ transform: commentsOpen ? "rotate(180deg)" : "rotate(0deg)" }}
-												/>
-											</Button>
-										</CollapsibleTrigger>
-										<CollapsibleContent className="border-accent w-full pt-2 mt-2">
-											{item._aComments && item._aComments.total > 0
-												? recursiveComments(item._aComments.list, 0)
-												: !loadingComments && (
-														<div className="flex items-center justify-center w-full p-4 text-accent">
-															No comments yet.
-														</div>
-													)}
-											{loadingComments ? (
-												<div className="flex items-center justify-center w-full p-4">
-													<LoaderIcon className="animate-spin" />
-												</div>
-											) : (
-												item._aComments &&
-												item._aComments.count < item._aComments.total && (
+												<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
 													<Button
-														className="w-full mt-2"
-														onClick={() => {
-															setLoadingComments(true);
-														}}
+														className={
+															"w-full flex justify-between bg-accent bgaccent   text-background " +
+															(aboutOpen
+																? "hover:brightness-125"
+																: "bg-input/50 text-accent hover:text-accent hover:bg-input")
+														}
 													>
-														Load more comments
+														About{" "}
+														<ChevronDownIcon
+															id="deschev"
+															className=" transform-[roate(180deg)] duration-200"
+															style={{ transform: aboutOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+														/>
 													</Button>
-												)
-											)}
-										</CollapsibleContent>
-									</Collapsible>
-									<Popover open={popover2Open}>
-										<PopoverTrigger className="sticky bottom-0 z-10 self-center" />
-										<PopoverContent
-											className="flex min-h-14 w-fit items-center justify-center gap-2 bg-background/20 backdrop-blur-md p-2 mr-2 -translate-y-full duration-200"
-											style={{
-												maxWidth: rightSlideOverOpen ? "auto" : "0rem",
-											}}
-											onMouseEnter={() => {
-												if (popover2Ref.current) {
-													clearTimeout(popover2Ref.current);
-													popover2Ref.current = null;
+												</CollapsibleTrigger>
+												<CollapsibleContent className="border-accent w-full pt-2 pl-2 mt-2">
+													<div
+														className="w-full font-sans"
+														dangerouslySetInnerHTML={{ __html: sanitizeRemoteHtml(item._sText) }}
+													></div>
+												</CollapsibleContent>
+											</Collapsible>
+										)}
+										{item._eUpdate && (
+											<Collapsible
+												key={item._sName + "upd"}
+												id="updates"
+												className=" w-full px-2 pb-3"
+												open={updateOpen}
+												onOpenChange={(open) => {
+													setUpdateOpen(open);
+													if (open) setLastSelected("update");
+												}}
+											>
+												<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
+													<Button
+														className={
+															"w-full flex justify-between bg-accent bgaccent   text-background " +
+															(updateOpen
+																? "hover:brightness-125"
+																: "bg-input/50 text-accent hover:text-accent hover:bg-input")
+														}
+													>
+														Updates{" "}
+														<ChevronDownIcon
+															id="deschev"
+															className=" transform-[roate(180deg)] duration-200"
+															style={{ transform: updateOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+														/>
+													</Button>
+												</CollapsibleTrigger>
+												<CollapsibleContent className="border-accent flex flex-col w-full gap-4  pt-2 mt-2">
+													{item._aUpdates &&
+														item._aUpdates.length > 0 &&
+														item._aUpdates.map((itm: any, index: number) => (
+															<>
+																{index > 0 && <hr className="border-accent/50" />}
+
+																<div className="flex rounded flex-col gap-2 bg-input/10 p-2">
+																	<div className="text-accent flex items-center justify-between pb-4 border-b">
+																		{itm._sName}
+																		<label className="flex flex-col text-xs text-gray-300">
+																			{" "}
+																			<label>{itm._sVersion}</label>{" "}
+																			<label className=" text-cyan-200">
+																				{getTimeDifference(now, itm._sDate || 0)}
+																			</label>
+																		</label>
+																	</div>
+																	<div className=" flex flex-col gap-2">
+																		{itm._aChangeLog &&
+																			itm._aChangeLog.map((changeItem: any, index: number) => (
+																				<div key={index} className="flex items-center gap-2">
+																					<div className="min-w-2 min-h-2 self-start mt-1.75 bg-accent bgaccent   rounded-full" />
+																					<label className=" text-cyan-50 font-sans text-sm">
+																						{changeItem.text}- [{changeItem.cat}]
+																					</label>
+																				</div>
+																			))}
+																	</div>
+																	{itm._sText && (
+																		<div
+																			className="w-full font-sans"
+																			dangerouslySetInnerHTML={{ __html: sanitizeRemoteHtml(itm._sText) }}
+																		/>
+																	)}
+																</div>
+															</>
+														))}
+												</CollapsibleContent>
+											</Collapsible>
+										)}
+										<Collapsible
+											key={item._sName + "cmt"}
+											id="comments"
+											className="w-full px-2 pb-1"
+											open={commentsOpen}
+											onOpenChange={(open) => {
+												setCommentsOpen(open);
+												setLastSelected("comments");
+												if (open && (!item._aComments || item._aComments.length == 0)) {
+													setLoadingComments(true);
 												}
-											}}
-											onMouseLeave={() => {
-												if (popover2Ref.current) {
-													clearTimeout(popover2Ref.current);
-													popover2Ref.current = null;
-												}
-												popover2Ref.current = setTimeout(() => {
-													setPopover2Open(false);
-												}, 1000);
 											}}
 										>
-											{item._sText && (
+											<CollapsibleTrigger className="text-accent flex items-center justify-between w-full h-8">
 												<Button
 													className={
-														"w flex justify-between bg-accent text-background " +
-														(lastSelected == "about"
+														"w-full flex justify-between bg-accent bgaccent   text-background " +
+														(commentsOpen
 															? "hover:brightness-125"
 															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
 													}
-													onClick={() => {
-														setAboutOpen(true);
-														setLastSelected("about");
-														setTimeout(() => {
-															const container = document.getElementById("container");
-															const about = document.getElementById("about");
-															if (about && container) {
-																container.scrollTo({
-																	top: about.offsetTop - container.offsetTop - 10,
-																	behavior: "smooth",
-																});
-															}
-														}, 50);
-													}}
 												>
-													About
+													Comments{" "}
+													<ChevronDownIcon
+														id="deschev"
+														className=" transform-[roate(180deg)] duration-200"
+														style={{ transform: commentsOpen ? "rotate(180deg)" : "rotate(0deg)" }}
+													/>
 												</Button>
-											)}
-											{item._eUpdate && (
-												<Button
-													className={
-														"w flex justify-between bg-accent text-background " +
-														(lastSelected == "update"
-															? "hover:brightness-125"
-															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
-													}
-													onClick={() => {
-														setUpdateOpen(true);
-														setLastSelected("update");
-														setTimeout(() => {
-															const container = document.getElementById("container");
-															const updates = document.getElementById("updates");
-															if (updates && container) {
-																container.scrollTo({
-																	top: updates.offsetTop - container.offsetTop - 10,
-																	behavior: "smooth",
-																});
-															}
-														}, 50);
-													}}
-												>
-													Updates
-												</Button>
-											)}
-											{
-												<Button
-													className={
-														"w flex justify-between bg-accent text-background " +
-														(lastSelected == "comments"
-															? "hover:brightness-125"
-															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
-													}
-													onClick={() => {
-														setCommentsOpen((prev) => {
-															if (!prev && (!item._aComments || item._aComments.length == 0)) {
+											</CollapsibleTrigger>
+											<CollapsibleContent className="border-accent w-full pt-2 mt-2">
+												{item._aComments && item._aComments.total > 0
+													? recursiveComments(item._aComments.list, 0)
+													: !loadingComments && (
+															<div className="flex items-center justify-center w-full p-4 text-accent">
+																No comments yet.
+															</div>
+														)}
+												{loadingComments ? (
+													<div className="flex items-center justify-center w-full p-4">
+														<LoaderIcon className="animate-spin" />
+													</div>
+												) : (
+													item._aComments &&
+													item._aComments.count < item._aComments.total && (
+														<Button
+															className="w-full mt-2"
+															onClick={() => {
 																setLoadingComments(true);
-															}
-															return true;
-														});
-
-														setLastSelected("comments");
-														setTimeout(() => {
-															const container = document.getElementById("container");
-															const comments = document.getElementById("comments");
-															if (comments && container) {
-																container.scrollTo({
-																	top: comments.offsetTop - container.offsetTop - 10,
-																	behavior: "smooth",
-																});
-															}
-														}, 50);
-													}}
-												>
-													Comments
-												</Button>
-											}
-										</PopoverContent>
-									</Popover>
-								</div>
-								<div className="text-accent min-h-24 justify-evenly absolute bottom-0 flex items-center h-24 min-w-full gap-1 px-1 border-t">
-									<div className="min-w-40 grid w-40 grid-cols-3 gap-2 text-xs">
-										{[
-											<>
-												<PlusIcon className="min-h-4 h-4" />
-												{getTimeDifference(now, item._tsDateAdded || 0)}
-											</>,
-											<>
-												<LoaderIcon className="h-4" />
-												{getTimeDifference(now, item._tsDateModified || 0)}
-											</>,
-											<>
-												<ThumbsUpIcon className="h-4" />
-												{item._nLikeCount || "0"}
-											</>,
-
-											<>
-												<MessageSquareIcon className="h-4" />
-												{item._nPostCount || "0"}
-											</>,
-											<>
-												<DownloadIcon className="h-4" />
-												{item._nDownloadCount || "0"}
-											</>,
-											<>
-												<EyeIcon className="h-4" />
-												{item._nViewCount || "0"}
-											</>,
-										].map((children) => (
-											<label className="zzz-fg-text text-accent flex flex-col items-center justify-center">
-												{children}
-											</label>
-										))}
+															}}
+														>
+															Load more comments
+														</Button>
+													)
+												)}
+											</CollapsibleContent>
+										</Collapsible>
 									</div>
-									<Separator className="max-w-0 min-h-full border-l" />
-									<div className="min-w-fit flex flex-col items-center justify-center gap-1">
-										<div className="min-w-fit flex items-center justify-center w-full gap-1">
-											<Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-												<PopoverTrigger
-													style={{ width: `${type == "Install" ? "19.5rem" : "16.5rem"}` }}
-													className="flex h-10 gap-4 overflow-hidden text-ellipsis bg-button zzz-fg-text button-like text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-													disabled={!item._aFiles || item._aFiles?.length == 0}
-												>
-													{type == "Install" ? <DownloadIcon /> : <Redo2Icon />}
-													{type}
-												</PopoverTrigger>
-												<PopoverContent
-													className="w-152 max-w-[calc(42vw-8.625rem)] mr-1 max-h-[75vh] overflow-auto gap-1 bg-sidebar p-1 flex flex-col"
-													style={{ marginLeft: true ? "0rem" : "3rem", marginBottom: "0.5rem" }}
-												>
-													{popoverContent}
-												</PopoverContent>
-											</Popover>
+									<div className="text-accent min-h-24 justify-evenly absolute bottom-0 flex items-center h-24 min-w-full gap-1 px-1 border-t">
+										<div className="min-w-40 grid w-40 grid-cols-3 gap-2 text-xs">
+											{[
+												<>
+													<PlusIcon className="min-h-4 h-4" />
+													{getTimeDifference(now, item._tsDateAdded || 0)}
+												</>,
+												<>
+													<LoaderIcon className="h-4" />
+													{getTimeDifference(now, item._tsDateModified || 0)}
+												</>,
+												<>
+													<ThumbsUpIcon className="h-4" />
+													{item._nLikeCount || "0"}
+												</>,
 
-											{type !== "Install" && (
-												<Popover open={altPopoverOpen} onOpenChange={setAltPopoverOpen}>
+												<>
+													<MessageSquareIcon className="h-4" />
+													{item._nPostCount || "0"}
+												</>,
+												<>
+													<DownloadIcon className="h-4" />
+													{item._nDownloadCount || "0"}
+												</>,
+												<>
+													<EyeIcon className="h-4" />
+													{item._nViewCount || "0"}
+												</>,
+											].map((children) => (
+												<label className="zzz-fg-text text-accent flex flex-col items-center justify-center">
+													{children}
+												</label>
+											))}
+										</div>
+										<Separator className="max-w-0 min-h-full border-l" />
+										<div className="min-w-fit flex flex-col items-center justify-center gap-1">
+											<div className="min-w-fit flex items-center justify-center w-full gap-1">
+												<Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
 													<PopoverTrigger
-														className="w-10 flex h-10 gap-4 overflow-hidden text-ellipsis button-like zzz-fg-text bg-button text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+														style={{ width: `${type == "Install" ? "19.5rem" : "16.5rem"}` }}
+														className="flex bg-input/50 hover:bg-input h-10 gap-4 overflow-hidden text-ellipsis zzz-fg-text button-like text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
 														disabled={!item._aFiles || item._aFiles?.length == 0}
 													>
-														<EllipsisVerticalIcon />
+														{type == "Install" ? <DownloadIcon /> : <Redo2Icon />}
+														{type}
 													</PopoverTrigger>
-													<PopoverContent className="w-152 max-w-[calc(42vw-8.625rem)] mr-2 max-h-[75vh] mb-2 overflow-auto gap-1 bg-sidebar p-1 flex flex-col">
-														<Label className="bg-accent/25 data-zzz:bg-zzz-accent-2/25 data-zzz:text-zzz-accent-2 text-accent flex items-center justify-center w-full h-12 text-lg rounded-md">
-															Install Separately
-														</Label>
+													<PopoverContent
+														className="w-152 max-w-[calc(42vw-8.625rem)] mr-1 max-h-[75vh] overflow-auto gap-1 bg-sidebar/50 backdrop-blur-md p-1 flex flex-col"
+														style={{ marginLeft: true ? "0rem" : "3rem", marginBottom: "0.5rem" }}
+													>
 														{popoverContent}
+													</PopoverContent>
+												</Popover>
+
+												{type !== "Install" && (
+													<Popover open={altPopoverOpen} onOpenChange={setAltPopoverOpen}>
+														<PopoverTrigger
+															className="w-10 bg-input/50 hover:bg-input flex h-10 gap-4 overflow-hidden text-ellipsis button-like zzz-fg-text text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+															disabled={!item._aFiles || item._aFiles?.length == 0}
+														>
+															<EllipsisVerticalIcon />
+														</PopoverTrigger>
+														<PopoverContent className="w-152 max-w-[calc(42vw-8.625rem)] mr-2 max-h-[75vh] mb-2 overflow-auto gap-1 bg-sidebar/50 backdrop-blur-md p-1 flex flex-col">
+															<Label className="bg-accent/25 data-zzz:bg-zzz-accent-2/25 data-zzz:text-zzz-accent-2 text-accent flex items-center justify-center w-full h-12 text-lg rounded-md">
+																Install Separately
+															</Label>
+															{popoverContent}
+														</PopoverContent>
+													</Popover>
+												)}
+											</div>
+											{installedItems.length > 1 && (
+												<Popover open={installedItemPopoverOpen} onOpenChange={setInstalledItemPopoverOpen}>
+													<PopoverTrigger
+														className="flex w-full h-10 gap-2 overflow-hidden text-ellipsis bg-input/50 hover:bg-input zzz-fg-text button-like text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
+														disabled={!item._aFiles || item._aFiles?.length == 0}
+													>
+														{installedItem != -1 ? (
+															<>
+																<img
+																	className="w-12 outline bg-accent/10 flex items-center justify-center object-cover h-8 text-white rounded-full pointer-events-none"
+																	onError={(e) => {
+																		e.currentTarget.src = "/who.jpg";
+																	}}
+																	src={getImageUrl(installedItems[installedItem].path) || "err"}
+																/>
+
+																<div className="text-ellipsis whitespace-nowrap max-w-60 text-start w-full overflow-hidden break-words">
+																	{installedItems[installedItem].name}
+																</div>
+															</>
+														) : (
+															<>Select Mod to Update</>
+														)}
+													</PopoverTrigger>
+													<PopoverContent
+														className="w-152 max-w-[calc(42vw-8.625rem)] mr-1 max-h-[75vh] overflow-auto gap-1 bg-sidebar/50 backdrop-blur-md p-1 flex flex-col"
+														style={{ marginLeft: "0.25rem", marginBottom: "0.5rem" }}
+													>
+														{installedItems.map((mod, index) => (
+															<Button
+																className="min-h-fit data-wuwa:p-2 flex min-w-full gap-1 p-1 overflow-hidden"
+																style={{
+																	borderRadius: "0.25rem",
+																}}
+																onClick={() => {
+																	setInstalledItem(index);
+																	setInstalledItemPopoverOpen(false);
+																}}
+															>
+																<img
+																	className="w-20 outline shrink-0 bg-accent/10 flex items-center justify-center object-cover h-12 text-white rounded-sm pointer-events-none"
+																	onError={(e) => {
+																		e.currentTarget.src = "/who.jpg";
+																	}}
+																	src={getImageUrl(mod.path) || "err"}
+																/>
+
+																<div className="w-full flex flex-col">
+																	<div className=" max-h-full text-base text-start w-full text-wrap wrap-break-word">
+																		{mod.name}
+																	</div>
+																	<div className=" max-h-full text-xs text-muted text-start w-full text-wrap wrap-break-word">
+																		{mod.path.split("\\").slice(0, -1).join("\\")}
+																	</div>
+																</div>
+															</Button>
+														))}
 													</PopoverContent>
 												</Popover>
 											)}
 										</div>
-										{installedItems.length > 1 && (
-											<Popover open={installedItemPopoverOpen} onOpenChange={setInstalledItemPopoverOpen}>
-												<PopoverTrigger
-													className="flex w-full h-10 gap-2 overflow-hidden text-ellipsis bg-button zzz-fg-text button-like text-accent shadow-xs hover:brightness-120  duration-300  items-center justify-center active:scale-90 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[0.1875rem] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive"
-													disabled={!item._aFiles || item._aFiles?.length == 0}
-												>
-													{installedItem != -1 ? (
-														<>
-															<img
-																className="w-12 outline bg-accent/10 flex items-center justify-center object-cover h-8 text-white rounded-full pointer-events-none"
-																onError={(e) => {
-																	e.currentTarget.src = "/who.jpg";
-																}}
-																src={getImageUrl(installedItems[installedItem].path) || "err"}
-															/>
-
-															<div className="text-ellipsis whitespace-nowrap max-w-60 text-start w-full overflow-hidden break-words">
-																{installedItems[installedItem].name}
-															</div>
-														</>
-													) : (
-														<>Select Mod to Update</>
-													)}
-												</PopoverTrigger>
-												<PopoverContent
-													className="w-152 max-w-[calc(42vw-8.625rem)] mr-1 max-h-[75vh] overflow-auto gap-1 bg-sidebar p-1 flex flex-col"
-													style={{ marginLeft: "0.25rem", marginBottom: "0.5rem" }}
-												>
-													{installedItems.map((mod, index) => (
-														<Button
-															className="min-h-fit data-wuwa:p-2 flex min-w-full gap-1 p-1 overflow-hidden"
-															style={{
-																borderRadius: "0.25rem",
-															}}
-															onClick={() => {
-																setInstalledItem(index);
-																setInstalledItemPopoverOpen(false);
-															}}
-														>
-															<img
-																className="w-20 outline shrink-0 bg-accent/10 flex items-center justify-center object-cover h-12 text-white rounded-sm pointer-events-none"
-																onError={(e) => {
-																	e.currentTarget.src = "/who.jpg";
-																}}
-																src={getImageUrl(mod.path) || "err"}
-															/>
-
-															<div className="w-full flex flex-col">
-																<div className=" max-h-full text-base text-start w-full text-wrap wrap-break-word">
-																	{mod.name}
-																</div>
-																<div className=" max-h-full text-xs text-muted text-start w-full text-wrap wrap-break-word">
-																	{mod.path.split("\\").slice(0, -1).join("\\")}
-																</div>
-															</div>
-														</Button>
-													))}
-												</PopoverContent>
-											</Popover>
-										)}
 									</div>
-								</div>
-							</motion.div>
-						)}
-					</AnimatePresence>
-				</motion.div>
+								</motion.div>
+							)}
+						</AnimatePresence>
+					</motion.div>
+					<motion.div
+						className="max-w-[47vw] w-200 flex items-center justify-center pointer-events-none fixed right-0 bottom-25 z-10"
+						initial={{ translateX: "100%", opacity: 0 }}
+						animate={{ translateX: "0%", opacity: 1 }}
+						exit={{ translateX: "100%", opacity: 0 }}
+						transition={{ duration: 0.3, ease: "linear" }}
+					>
+						<div
+							className="flex min-h-14 w-fit self-center items-center pointer-events-auto justify-center gap-2 bg-sidebar/50 rounded border button-like backdrop-blur-md p-2 mr-2 transition-opacity mt-2 z-10 duration-200"
+							style={{
+								opacity: item?._sText || item?._eUpdate ? (popover2Open ? 1 : 0) : 0,
+							}}
+							onMouseEnter={() => {
+								if (popover2Ref.current) {
+									clearTimeout(popover2Ref.current);
+									popover2Ref.current = null;
+								}
+								setPopover2Open(true);
+							}}
+							onMouseLeave={() => {
+								if (popover2Ref.current) {
+									clearTimeout(popover2Ref.current);
+									popover2Ref.current = null;
+								}
+								popover2Ref.current = setTimeout(() => {
+									setPopover2Open(false);
+								}, 1000);
+							}}
+						>
+							{item?._sText && (
+								<Button
+									className={
+										"w flex justify-between bg-accent text-background " +
+										(lastSelected == "about"
+											? "hover:brightness-125"
+											: "bg-input/50 text-accent hover:text-accent hover:bg-input")
+									}
+									onClick={() => {
+										setAboutOpen(true);
+										setLastSelected("about");
+										setTimeout(() => {
+											const container = document.getElementById("container");
+											const about = document.getElementById("about");
+											if (about && container) {
+												container.scrollTo({
+													top: about.offsetTop - container.offsetTop - 10,
+													behavior: "smooth",
+												});
+											}
+										}, 50);
+									}}
+								>
+									About
+								</Button>
+							)}
+							{item?._eUpdate && (
+								<Button
+									className={
+										"w flex justify-between bg-accent text-background " +
+										(lastSelected == "update"
+											? "hover:brightness-125"
+											: "bg-input/50 text-accent hover:text-accent hover:bg-input")
+									}
+									onClick={() => {
+										setUpdateOpen(true);
+										setLastSelected("update");
+										setTimeout(() => {
+											const container = document.getElementById("container");
+											const updates = document.getElementById("updates");
+											if (updates && container) {
+												container.scrollTo({
+													top: updates.offsetTop - container.offsetTop - 10,
+													behavior: "smooth",
+												});
+											}
+										}, 50);
+									}}
+								>
+									Updates
+								</Button>
+							)}
+							{item && (
+								<Button
+									className={
+										"w flex justify-between bg-accent text-background " +
+										(lastSelected == "comments"
+											? "hover:brightness-125"
+											: "bg-input/50 text-accent hover:text-accent hover:bg-input")
+									}
+									onClick={() => {
+										setCommentsOpen((prev) => {
+											if (!prev && (!item._aComments || item._aComments.length == 0)) {
+												setLoadingComments(true);
+											}
+											return true;
+										});
+
+										setLastSelected("comments");
+										setTimeout(() => {
+											const container = document.getElementById("container");
+											const comments = document.getElementById("comments");
+											if (comments && container) {
+												container.scrollTo({
+													top: comments.offsetTop - container.offsetTop - 10,
+													behavior: "smooth",
+												});
+											}
+										}, 50);
+									}}
+								>
+									Comments
+								</Button>
+							)}
+						</div>
+					</motion.div>
+				</>
 			)}
 		</AnimatePresence>
 	);

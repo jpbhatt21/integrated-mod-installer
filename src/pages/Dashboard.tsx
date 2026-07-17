@@ -21,6 +21,7 @@ import {
 	SquareIcon,
 	XIcon,
 } from "lucide-react";
+import { useText } from "@/hooks/use-text";
 
 const Icons = {
 	pending: <ClockIcon className="min-h-4 min-w-4 max-w-4" />,
@@ -38,6 +39,7 @@ export default function Dashboard({
 	prev: any;
 	addToDownloads: (url: string, item: any) => void;
 }) {
+	const t = useText();
 	const config = useAtomValue(CONFIG);
 	const [downloads, setDownloads] = useAtom(DOWNLOAD_LIST);
 	const cancelDownload = (key: number, type = "completed") => {
@@ -82,8 +84,8 @@ export default function Dashboard({
 		<div className="w-full relative flex flex-col p-4 space-y-4 min-h-[calc(100vh-3.5rem)] h-[calc(100vh-3.5rem)]">
 			<div className="flex items-end justify-between">
 				<div>
-					<h1 className="text-2xl font-bold">Downloads</h1>
-					<p className="text-muted-foreground">Install mods from gamebanana</p>
+					<h1 className="text-2xl font-bold">{t("dl")}</h1>
+					<p className="text-muted-foreground">{t("installMods")}</p>
 				</div>
 				<Button
 					className="border-border/30 border"
@@ -94,7 +96,7 @@ export default function Dashboard({
 						});
 					}}
 				>
-					Clear Completed
+					{t("clearDone")}
 				</Button>
 			</div>
 			{downloadList.length > 0 ? (

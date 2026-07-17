@@ -1,7 +1,7 @@
 import { apiClient } from "./api";
 import { GAMES } from "./consts";
 import { Category, Games } from "./types";
-import { CATEGORIES, CONFIG, ERR, INIT_DONE, store } from "./vars";
+import { CATEGORIES, CONFIG, ERR, FIRST_LOAD, INIT_DONE, store } from "./vars";
 import defConfig from "../default.json";
 import { path } from "@tauri-apps/api";
 import { exists, mkdir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -90,13 +90,14 @@ export async function main() {
 	try {
 		store.set(INIT_DONE, false);
 		initCategories();
-		if ((sessionStorage.getItem("firstLoad") || "true") === "true") {
+		if (JSON.parse(sessionStorage.getItem("firstLoad") || '"true"') === "true") {
 			sessionStorage.setItem("firstLoad", "false");
 			remove("downloads", { recursive: true }).finally(() => mkdir("downloads"));
 		}
 		let appData = await path.dataDir();
 		const XXMI = `${appData}\\XXMI Launcher`;
 		if (!(await exists("config.json"))) {
+			store.set(FIRST_LOAD, true);
 			await writeTextFile("config.json", JSON.stringify(defConfig, null, 2));
 		}
 		try {

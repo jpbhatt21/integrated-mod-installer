@@ -21,6 +21,7 @@ import MiniSearch from "minisearch";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { AnimatePresence, motion } from "motion/react";
+import { useText } from "@/hooks/use-text";
 const leftSidebarOpen = true; // Placeholder for the actual state management
 const iconMap: { [key: string]: JSX.Element } = {
 	Skin: <ShirtIcon className="w-6 h-6" />,
@@ -34,6 +35,7 @@ const iconMap: { [key: string]: JSX.Element } = {
 	Entity: <VenetianMaskIcon className="w-6 h-6" />,
 };
 function LeftSideBar() {
+	const t = useText();
 	const game = useAtomValue(BROWSE_SETTINGS).game as Games;
 	const searchDb = useRef<MiniSearch<any> | null>(null);
 	const categories = useAtomValue(CATEGORIES);
@@ -139,7 +141,7 @@ function LeftSideBar() {
 			<Card className="py-3 duration-200 h-full overflow-hidden gap-3">
 				<CardContent className="flex  duration-200 w-full h-full flex-col px-2">
 					<Input
-						placeholder="Search categories..."
+						placeholder={t("searchCats")}
 						value={searchTerm}
 						onChange={(e) => setSearchTerm(e.target.value)}
 						className="mb-2 min-h-8"
@@ -184,12 +186,12 @@ function LeftSideBar() {
 										{cat._sName == "All" ? (
 											<>
 												<GroupIcon className="aspect-square h-full pointer-events-none" />
-												<span className="">All</span>
+												<span className="">{t("all")}</span>
 											</>
 										) : cat._sName == UNCATEGORIZED ? (
 											<>
 												<FileQuestionIcon className="aspect-square h-full pointer-events-none" />
-												<span className="">Uncategorized</span>
+												<span className="">{t("uncategorized")}</span>
 											</>
 										) : (
 											<>

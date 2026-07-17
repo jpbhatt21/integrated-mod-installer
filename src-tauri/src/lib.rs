@@ -720,9 +720,9 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .plugin(
+        
             Builder::default()
-                // sets the flags to only track and restore size
-                .with_state_flags(StateFlags::SIZE)
+                .with_state_flags(StateFlags::all().difference(StateFlags::DECORATIONS))
                 .build(),
         )
         .plugin(

@@ -22,7 +22,7 @@ function Browse({ addToDownloads }: { addToDownloads: (url: string, item: any, m
 									prev.game = game;
 									return { ...prev };
 								});
-								apiClient.setGame(game as any);
+								apiClient.setGame(browseSettings.game as any)
 							}}
 						>
 							<Tooltip>

@@ -12,7 +12,7 @@ import { Button } from "./components/ui/button";
 import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { fetchMod, formatBytes, join, modRouteFromURL, sanitizeFileName, serializeDownloads } from "./utils/utils";
 import { useAtom, useAtomValue } from "jotai";
-import { CATEGORIES, CONFIG, DOWNLOAD_LIST, store } from "./utils/vars";
+import { BROWSE_SETTINGS, CATEGORIES, CONFIG, DOWNLOAD_LIST, FIRST_LOAD, store } from "./utils/vars";
 import { DownloadItem, Games, OnlineMod } from "./utils/types";
 import { GAME_GB_IDS, GAME_NAMES, UNCATEGORIZED } from "./utils/consts";
 import { exists, remove } from "@tauri-apps/plugin-fs";
@@ -21,6 +21,9 @@ import { AlertDialogContent } from "./components/ui/alert-dialog";
 import { listen } from "@tauri-apps/api/event";
 import { validateModDownload } from "./utils/filesys";
 import Browse from "./pages/browser/Browse";
+import { AnimatePresence, motion } from "motion/react";
+import { apiClient } from "./utils/api";
+import { useText, TextKey } from "./hooks/use-text";
 type Page = "dashboard" | "settings" | "updates" | "browse";
 interface Action {
 	title: string;
@@ -38,22 +41,22 @@ const appWindow = getCurrentWindow();
 const navItems = [
 	{
 		id: "browse" as Page,
-		label: "Browse",
+		label: "brw" as TextKey,
 		icon: <GlobeIcon />,
 	},
 	{
 		id: "dashboard" as Page,
-		label: "Downloads",
+		label: "dl" as TextKey,
 		icon: <HardDriveDownloadIcon />,
 	},
 	{
 		id: "settings" as Page,
-		label: "Settings",
+		label: "set" as TextKey,
 		icon: <SettingsIcon />,
 	},
 	{
 		id: "updates" as Page,
-		label: "Updates",
+		label: "upd" as TextKey,
 		icon: <RefreshCcwIcon />,
 	},
 ];
@@ -65,7 +68,11 @@ const prev: {
 	};
 } = {};
 function App() {
-	const [currentPage, setCurrentPage] = useState<Page>("dashboard");
+	const t = useText();
+	const firstLoad = useAtomValue(FIRST_LOAD);
+	const [currentPage, setCurrentPage] = useState<Page>(firstLoad ? "settings" : "dashboard");
+	const [prevPageIndex, setPrevPageIndex] = useState<number>(firstLoad ? 2 : 1);
+	const [curPageIndex, setCurPageIndex] = useState<number>(firstLoad ? 2 : 1);
 	const categories = useAtomValue(CATEGORIES);
 	const config = useAtomValue(CONFIG);
 	const [urlQueue, setUrlQueue] = useState<string[]>([]);
@@ -80,6 +87,10 @@ function App() {
 	const activeDownloadsRef = useRef<Record<string, DownloadItem>>({});
 	const extractingDownloadsRef = useRef<Record<string, DownloadItem>>({});
 	const launchingDownloadsRef = useRef(false);
+	const browseSettings = useAtomValue(BROWSE_SETTINGS);
+	useEffect(() => {
+		apiClient.setGame(browseSettings.game as any);
+	}, [browseSettings.game]);
 
 	function clearStoredDownload(key: string) {
 		const stored = JSON.parse(sessionStorage.getItem("downloads") || "{}");
@@ -225,7 +236,10 @@ function App() {
 				});
 			} else {
 				prev.failed.push(ele);
-				setCurrentPage("settings");
+				setPrevPageIndex(curPageIndex);
+				setCurPageIndex(navItems.findIndex((item) => item.id == "settings"));
+				setTimeout(() => setCurrentPage("settings"), 0);
+
 				setPendingActions((prev) => [
 					...prev,
 					{
@@ -521,7 +535,7 @@ function App() {
 					</div>
 
 					<div className="z-20 flex flex-col items-center w-full h-full gap-1 p-2 pl-3 font-bold pointer-events-auto">
-						{navItems.map((item) => (
+						{navItems.map((item, index) => (
 							<Button
 								key={item.id}
 								variant={currentPage === item.id ? "default" : "ghost"}
@@ -530,7 +544,11 @@ function App() {
 										? "bg-accent/90 text-background hover:brightness-110"
 										: "text-muted-foreground hover:text-background hover:bg-accent/50"
 								}`}
-								onClick={() => setCurrentPage(item.id)}
+								onClick={() => {
+									setPrevPageIndex(curPageIndex);
+									setCurPageIndex(index);
+									setTimeout(() => setCurrentPage(item.id), 0);
+								}}
 							>
 								<div
 									className="duration-300"
@@ -548,7 +566,7 @@ function App() {
 										marginBottom: currentPage == item.id ? "-18px" : "0px",
 									}}
 								>
-									{item.label}
+									{t(item.label)}
 								</label>
 							</Button>
 						))}
@@ -556,9 +574,32 @@ function App() {
 				</div>
 
 				{/* Main Content */}
-				<div className="flex-1 rounded-xl p-2  m-2 ml-1 mt-0 h-full max-h-[calc(100vh-2.5rem)] bg-muted-foreground/3 overflow-hidden">
-					<ScrollArea className="h-full rounded-md">{renderPage()}</ScrollArea>
-				</div>
+				<AnimatePresence mode="popLayout">
+					<motion.div
+						key={currentPage}
+						className="flex-1 rounded-xl p-2  m-2 ml-1 mt-0 h-full max-h-[calc(100vh-2.5rem)] bg-muted-foreground/3 overflow-hidden"
+						initial={{
+							opacity: 0,
+							y: prevPageIndex < curPageIndex ? "25%" : prevPageIndex > curPageIndex ? "-25%" : 0,
+							scale:
+								prevPageIndex < curPageIndex
+									? 1.025 + 0.025 * (curPageIndex - prevPageIndex)
+									: 0.975 - 0.025 * (prevPageIndex - curPageIndex),
+						}}
+						animate={{ opacity: 1, y: 0, scale: 1 }}
+						exit={{
+							opacity: 0,
+							y: prevPageIndex < curPageIndex ? "-25%" : prevPageIndex > curPageIndex ? "25%" : 0,
+							scale:
+								prevPageIndex < curPageIndex
+									? 0.975 - 0.025 * (curPageIndex - prevPageIndex)
+									: 1.025 + 0.025 * (prevPageIndex - curPageIndex),
+						}}
+						transition={{ duration: 0.3 }}
+					>
+						<ScrollArea className="h-full rounded-md">{renderPage()}</ScrollArea>
+					</motion.div>
+				</AnimatePresence>
 			</div>
 			<AlertDialog open={pendingActions.length > 0}>
 				<AlertDialogContent className="py-0">

@@ -18,6 +18,7 @@ import { preventContextMenu } from "@/utils/utils";
 import { LoaderIcon } from "lucide-react";
 import Carousel from "./components/Carousel";
 import CardOnline from "./components/CardOnline";
+import { useText } from "@/hooks/use-text";
 type gms = "WW" | "ZZ" | "GI" | "SR" | "EF";
 const pageCount: Record<gms, Record<string, number>> = {
 	WW: {},
@@ -27,6 +28,7 @@ const pageCount: Record<gms, Record<string, number>> = {
 	EF: {},
 };
 function Main() {
+	const t = useText();
 	const [initial, setInitial] = useState(true);
 	const loadingRef = useRef(false);
 	const containerRef = useRef<HTMLDivElement | null>(null);
@@ -111,7 +113,7 @@ function Main() {
 				setLoadError("");
 			} catch (err) {
 				// error("[IMM] Failed to load next online page:", err);
-				setLoadError("Failed to load online data.");
+				setLoadError(t("loadOnlineErr"));
 			} finally {
 				loadingRef.current = false;
 			}
@@ -192,7 +194,7 @@ function Main() {
 			.catch(() => {
 				if (controller.signal.aborted) return;
 
-				setLoadError("Failed to load online data.");
+				setLoadError(t("loadOnlineErr"));
 				loadingRef.current = false;
 			});
 	}
@@ -364,7 +366,7 @@ function Main() {
 											<div className="card-generic card-online"></div>
 										) : (
 											// <></>
-											<CardOnline {...item} now={now} blur={nsfw == 1} show={"Show"} />
+											<CardOnline {...item} now={now} blur={nsfw == 1} show={t("show")} />
 										)}
 									</motion.div>
 								);

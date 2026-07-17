@@ -6,8 +6,10 @@ import { BROWSE_PATH, BROWSE_RIGHT_SLIDE_OVER_OPEN, BROWSE_SORT, BROWSE_TYPE } f
 import { useAtom } from "jotai";
 import { handleInAppLink } from "@/utils/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useText } from "@/hooks/use-text";
 
 function TopBar() {
+	const t = useText();
 	const [term, setTerm] = useState("");
 	const [onlinePath, setOnlinePath] = useAtom(BROWSE_PATH);
 	const [onlineType, setOnlineType] = useAtom(BROWSE_TYPE);
@@ -83,7 +85,7 @@ function TopBar() {
 				<Input
 					id="search-input"
 					defaultValue={""}
-					placeholder={"Search..."}
+					placeholder={t("search")}
 					className="text-foreground placeholder:text-muted-foreground focus-visible:ring-0 focus-visible:ring-offset-0 flex-1 h-8 bg-transparent border-0"
 					onChange={(e) => {
 						setTerm(e.target.value);
@@ -99,10 +101,10 @@ function TopBar() {
 						<div className="min-w-fit bg-accent text-background hover:brightness-150 cursor-pointerx flex items-center justify-center h-full gap-1 p-2 text-xs duration-300 rounded-md select-none">
 							{onlinePath.startsWith("home") || onlinePath.startsWith("search")
 								? onlineType == "Mod"
-									? "Mods Only"
-									: "All"
+									? t("modsOnly")
+									: t("all")
 								: onlineSort == ""
-									? "Default"
+									? t("default")
 									: {
 											Generic_MostLiked: (
 												<>
@@ -139,7 +141,7 @@ function TopBar() {
 											color: onlineType ? "" : "var(--background)",
 										}}
 									>
-										All
+										{t("all")}
 									</div>
 									<div
 										className="hover:bg-accent hover:text-background bg-accent/10 min-h-8 cursor-pointerx flex items-center justify-center w-full gap-1 p-2 text-sm duration-300 rounded-md select-none"
@@ -154,7 +156,7 @@ function TopBar() {
 											color: onlineType ? "var(--background)" : "",
 										}}
 									>
-										Mods Only
+										{t("modsOnly")}
 									</div>
 								</>
 							) : (
@@ -162,7 +164,7 @@ function TopBar() {
 									{[
 										{
 											sort: "",
-											children: <>Default</>,
+											children: <>{t("default")}</>,
 											key: "",
 										},
 										{

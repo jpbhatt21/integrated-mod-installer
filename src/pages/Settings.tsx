@@ -2,9 +2,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { GAME_ICONS, GAME_NAMES, GAMES } from "@/utils/consts";
+import { GAME_ICONS, GAME_NAMES, GAMES, LANG_LIST } from "@/utils/consts";
 import { useAtom } from "jotai";
-import { CONFIG } from "@/utils/vars";
+import { CONFIG, SAVED_LANG } from "@/utils/vars";
+import { Language } from "@/utils/types";
+import { useText } from "@/hooks/use-text";
 import { FolderIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -13,22 +15,135 @@ import { exists } from "@tauri-apps/plugin-fs";
 import { join } from "@/utils/utils";
 import { getModDir, readXXMIConfig } from "@/utils/init";
 import { addToast } from "@/_Toaster/ToastProvider";
-import { AlertDialog, AlertDialogAction, AlertDialogContent, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
+import TEXT from "@/textData.json";
+import { useState } from "react";
+import { Separator } from "@/components/ui/separator";
 export default function Settings() {
 	const [config, setConfig] = useAtom(CONFIG);
+	const [language, setLanguage] = useAtom(SAVED_LANG);
+	const [langAlertData, setLangAlertData] = useState({ prev: "en", new: "en" } as {
+		prev: keyof typeof TEXT;
+		new: keyof typeof TEXT;
+	});
+	const [alertOpen, setAlertOpen] = useState(false);
+	const t = useText();
 	return (
 		<div className="p-4 space-y-4">
+			<AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+				<AlertDialogContent
+				>
+					{ 
+						<>
+							<div className=" flex flex-col items-center w-120 gap-6 mt-6 text-center">
+								<div className="flex flex-col items-center justify-center gap-2 text-xl text-gray-200">
+									{TEXT[langAlertData.prev].Change + TEXT[langAlertData.prev].Languages[langAlertData.new]}
+									?
+									<Separator />
+									<span
+										style={{
+											fontFamily: `var(--game-font-${langAlertData.new})`,
+										}}
+									>
+										{TEXT[langAlertData.new].Change + TEXT[langAlertData.new].Languages[langAlertData.new]}?
+									</span>
+								</div>
+
+								{langAlertData.new !== "en" && (
+									<div className="max-w-96 text-accent flex flex-col gap-4 text-sm">
+										<span>
+											{TEXT[langAlertData.prev].Warning1 + " "}
+											{TEXT[langAlertData.prev].Warning2}
+										</span>
+										<span
+											style={{
+												fontFamily: `var(--game-font-${langAlertData.new})`,
+											}}
+										>
+											{TEXT[langAlertData.new].Warning1 + " "}
+											{TEXT[langAlertData.new].Warning2}
+										</span>
+									</div>
+								)}
+							</div>
+							<div className="flex justify-between w-120 gap-4 mt-4">
+								<AlertDialogCancel className="min-w-24 duration-300">
+									{TEXT[langAlertData.prev].Cancel} |
+									<span
+										style={{
+											fontFamily: `var(--game-font-${langAlertData.new})`,
+										}}
+									>
+										{TEXT[langAlertData.new].Cancel}
+									</span>
+								</AlertDialogCancel>
+								<AlertDialogAction
+									className="min-w-24 text-accent hover:bg-accent hover:text-background "
+									onClick={() => {
+										setLanguage(langAlertData.new);
+										setAlertOpen(false);
+									}}
+								>
+									{TEXT[langAlertData.prev].Confirm} |
+									<span
+										style={{
+											fontFamily: `var(--game-font-${langAlertData.new})`,
+										}}
+									>
+										{TEXT[langAlertData.new].Confirm}
+									</span>
+								</AlertDialogAction>
+							</div>
+						</>
+					}
+				</AlertDialogContent>
+			</AlertDialog>
 			<div>
-				<h1 className="text-2xl font-bold">Settings</h1>
-				<p className="text-muted-foreground">Configure your preferences</p>
+				<h1 className="text-2xl font-bold">{t("set")}</h1>
+				<p className="text-muted-foreground">{t("prefs")}</p>
 			</div>
+			<Card className="flex flex-row w-full justify-between">
+				<CardHeader className="w-full">
+					<CardTitle>{t("lang")}</CardTitle>
+					<CardDescription>{t("langDesc")}</CardDescription>
+				</CardHeader>
+				<CardContent className="flex w-full max-w-150 items-center">
+					<div className="justify-evenly flex w-full ">
+						{LANG_LIST.map((lang) => (
+							<div
+								key={lang.Code}
+								className={`hover:brightness-150 flex-col flex items-center justify-center group gap-1 text-sm duration-300 cursor-pointerx select-none`}
+								onClick={() => {
+									if (language == lang.Code) return;
+									setLangAlertData({
+										prev: language || "en",
+										new: lang.Code as keyof typeof TEXT,
+									});
+									setAlertOpen(true);
+								}}
+							>
+								<img src={lang.Flag} alt={lang.Name} className="group-hover:scale-120 w-8 h-8 duration-200" />
+								<span
+									className="text-gray-300 whitespace-nowrap opacity-50 -mt-1.5 group-hover:mt-0 group-hover:-mb-1.5 overflow-hidden text-xs duration-200"
+									style={{
+										opacity: language == lang.Code ? "1" : "",
+										color: language == lang.Code ? "var(--accent)" : "",
+										fontFamily: `var(--game-font-${lang.Code})`,
+									}}
+								>
+									{lang.Name}
+								</span>
+							</div>
+						))}
+					</div>
+				</CardContent>
+			</Card>
 
 			<Card className="flex flex-row w-full justify-between">
 				<CardHeader className="w-full">
-					<CardTitle>Minimize to Tray</CardTitle>
-					<CardDescription>Minimize the app to the system tray instead of closing it</CardDescription>
+					<CardTitle>{t("minTray")}</CardTitle>
+					<CardDescription>{t("minTrayDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex items-center gap-1">
 					<Switch
@@ -47,17 +162,17 @@ export default function Settings() {
 			<Card>
 				<div className="flex w-full justify-between pr-6">
 					<CardHeader className="w-full">
-						<CardTitle>Mod Directories</CardTitle>
-						<CardDescription>Select the folders where mods should be installed to for each game</CardDescription>
+						<CardTitle>{t("modDirs")}</CardTitle>
+						<CardDescription>{t("modDirsDesc")}</CardDescription>
 					</CardHeader>
 					<AlertDialog>
 						<AlertDialogTrigger asChild>
 							<Button className="" onClick={() => {}}>
-								Auto-detect via XXMI
+								{t("autoXXMI")}
 							</Button>
 						</AlertDialogTrigger>
 						<AlertDialogContent className="items-center  justify-evenly">
-							<div className="min-h-fit font-semibold text-accent  text-3xl">Confirm XXMI Directory</div>
+							<div className="min-h-fit font-semibold text-accent text-3xl">{t("confirmXXMI")}</div>
 							<div
 								className="flex w-120 items-center gap-2"
 								onClick={async () => {
@@ -92,14 +207,14 @@ export default function Settings() {
 											if (close) close.click();
 										} else {
 											addToast({
-												message: "Unable to read XXMI config.",
+												message: t("xxmiErr"),
 												type: "error",
 											});
 										}
 									}
 								}}
 							>
-								Verify
+								{t("verify")}
 							</AlertDialogAction>
 						</AlertDialogContent>
 					</AlertDialog>
@@ -166,8 +281,8 @@ export default function Settings() {
 			</Card>
 			<Card className="flex flex-row w-full justify-between">
 				<CardHeader className="w-full">
-					<CardTitle>Concurrent Downloads</CardTitle>
-					<CardDescription>Maximum number of downloads to run simultaneously</CardDescription>
+					<CardTitle>{t("concDl")}</CardTitle>
+					<CardDescription>{t("concDlDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex items-center gap-1">
 					<Button
@@ -220,8 +335,8 @@ export default function Settings() {
 			</Card>
 			<Card className="flex flex-row w-full justify-between">
 				<CardHeader className="w-full">
-					<CardTitle>Save Preview Image</CardTitle>
-					<CardDescription>Downloads a preview image from gamebanana for each mod</CardDescription>
+					<CardTitle>{t("savePreview")}</CardTitle>
+					<CardDescription>{t("savePreviewDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="flex items-center gap-1">
 					<Switch
@@ -258,8 +373,8 @@ export default function Settings() {
 			</Card> */}
 			<Card>
 				<CardHeader className="w-full">
-					<CardTitle>Mods Directory Structure</CardTitle>
-					<CardDescription>Whether to create subdirectories for each mod category or not</CardDescription>
+					<CardTitle>{t("dirStructure")}</CardTitle>
+					<CardDescription>{t("dirStructureDesc")}</CardDescription>
 				</CardHeader>
 				<CardContent className="space-y-4">
 					<Tabs
@@ -274,8 +389,8 @@ export default function Settings() {
 						className="w-full"
 					>
 						<TabsList className="bg-background/0 h-10 w-full">
-							<TabsTrigger value="0">Flat</TabsTrigger>
-							<TabsTrigger value="1">Categorized</TabsTrigger>
+							<TabsTrigger value="0">{t("flat")}</TabsTrigger>
+							<TabsTrigger value="1">{t("categorized")}</TabsTrigger>
 						</TabsList>
 					</Tabs>
 					<div className="flex w-full gap-6 px-2 items-center justify-between">

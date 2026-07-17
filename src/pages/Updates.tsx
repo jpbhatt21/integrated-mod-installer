@@ -5,6 +5,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { DownloadIcon, ExternalLinkIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
+import { useText } from "@/hooks/use-text";
 
 interface UpdateInfo {
 	currentVersion: string;
@@ -18,6 +19,7 @@ interface UpdateInfo {
 }
 
 export default function Updates() {
+	const t = useText();
 	const [updateInfo, setUpdateInfo] = useState<UpdateInfo>({
 		currentVersion: "1.0.0",
 		latestVersion: "1.0.0",
@@ -83,13 +85,13 @@ export default function Updates() {
 	return (
 		<div className="p-6 space-y-6">
 			<div>
-				<h1 className="text-2xl font-bold">Updates</h1>
-				<p className="text-muted-foreground">Check for and install application updates</p>
+				<h1 className="text-2xl font-bold">{t("upd")}</h1>
+				<p className="text-muted-foreground">{t("checkInstallUpd")}</p>
 			</div>
 
 			<Card>
 				<CardHeader>
-					<CardTitle>Current Version</CardTitle>
+					<CardTitle>{t("curVer")}</CardTitle>
 					<CardDescription>Integrated Mod Installer</CardDescription>
 				</CardHeader>
 				<CardContent className="flex items-center justify-between gap-4">
@@ -100,16 +102,16 @@ export default function Updates() {
 					<div className="flex gap-2">
 						<Button variant="outline" onClick={checkForUpdates} disabled={checking || downloading}>
 							{checking ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcwIcon className="mr-2 h-4 w-4" />}
-							{checking ? "Checking..." : "Check for Updates"}
+							{checking ? t("checking") : t("checkUpd")}
 						</Button>
 						{updateInfo.hasUpdate && (
 							<Button onClick={downloadUpdate} disabled={downloading || updateInfo.restartRequired}>
 								{downloading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <DownloadIcon className="mr-2 h-4 w-4" />}
 								{downloading
-									? `Downloading${updateInfo.progress === undefined ? "..." : ` ${updateInfo.progress}%`}`
+								? `${t("downloading")}${updateInfo.progress === undefined ? "..." : ` ${updateInfo.progress}%`}`
 									: updateInfo.restartRequired
-										? "Installed"
-										: "Download Update"}
+									? t("installed")
+									: t("downloadUpd")}
 							</Button>
 						)}
 					</div>
@@ -130,12 +132,12 @@ export default function Updates() {
 			<Card>
 				<CardContent className="flex items-center justify-between pt-6">
 					<div>
-						<p className="font-medium">View Full Changelog</p>
-						<p className="text-sm text-muted-foreground">See all previous versions and updates</p>
+						<p className="font-medium">{t("viewChangelog")}</p>
+						<p className="text-sm text-muted-foreground">{t("changelogDesc")}</p>
 					</div>
 					<Button variant="ghost" size="sm" onClick={() => openUrl("https://github.com/jpbhatt21/integrated-mod-installer/releases")}>
 						<ExternalLinkIcon className="mr-2 h-4 w-4" />
-						View Changelog
+						{t("viewChangelogBtn")}
 					</Button>
 				</CardContent>
 			</Card>
