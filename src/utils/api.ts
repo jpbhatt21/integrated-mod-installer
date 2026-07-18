@@ -1,20 +1,22 @@
 // API client for communicating with Flask backend
 
-// import { VERSION } from "./consts";
+import { VERSION } from "./consts";
 // import { saveConfigs } from "./filesys";
 import { Category, Games } from "./types";
 import { sanitizeFileName } from "./utils";
 // import { store } from "./vars";
 import GD from "@/gameData.json";
+import { CONFIG, store } from "./vars";
+import { saveConfig } from "./filesys";
 const GAME_DATA = GD;
 const API_BASE_URL = "https://gamebanana.com/apiv11/";
-// const HEALTH_CHECK = "https://health.wwmm.bhatt.jp/health";
+const HEALTH_CHECK = "https://health.wwmm.bhatt.jp/health";
 class ApiClient {
 	private GAME = "WW" as Games;
-	// private CLIENT = "";
-	// setClient(client: string) {
-	// 	this.CLIENT = client;
-	// }
+	private CLIENT = "";
+	setClient(client: string) {
+		this.CLIENT = client;
+	}
 	setGame(game: keyof typeof GAME_DATA) {
 		if (GAME_DATA[game]) {
 			this.GAME = game;
@@ -433,7 +435,6 @@ class ApiClient {
 
 	async categories(game: Games = this.GAME as Games): Promise<Category[]> {
 		// this.setGame(game as any);
-		this.healthCheck();
 		try {
 			const fetchWithRetry = async (timeouts: number[] = [2000, 5000]): Promise<any> => {
 				for (let i = 0; i < timeouts.length; i++) {
@@ -536,21 +537,21 @@ class ApiClient {
 	}
 
 	async healthCheck() {
-		// const base = `${HEALTH_CHECK}/${VERSION || "2.0.1"}/${this.GAME || "WW"}`;
-		// try {
-		// 	if (this.CLIENT) fetch(`${base}/${this.CLIENT}`);
-		// 	else {
-		// 		fetch(`${base}/_${Date.now()}`)
-		// 			.then((res) => res.json())
-		// 			.then((data) => {
-		// 				if (data.client) {
-		// 					this.CLIENT = data.client;
-		// 					store.set(SETTINGS, (prev) => ({ ...prev, global: { ...prev.global, clientDate: data.client } }));
-		// 					saveConfigs();
-		// 				}
-		// 			});
-		// 	}
-		// } catch (error) {}
+		const base = `${HEALTH_CHECK}/${VERSION || "1.0.0"}/IMI`;
+		try {
+			if (this.CLIENT) fetch(`${base}/${this.CLIENT}`);
+			else {
+				fetch(`${base}/_${Date.now()}`)
+					.then((res) => res.json())
+					.then((data) => {
+						if (data.client) {
+							this.CLIENT = data.client;
+							store.set(CONFIG, (prev) => ({ ...prev, clientDate: data.client }));
+							saveConfig();
+						}
+					});
+			}
+		} catch (error) {}
 	}
 }
 export const apiClient = new ApiClient();

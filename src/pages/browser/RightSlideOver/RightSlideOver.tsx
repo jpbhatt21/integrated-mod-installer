@@ -46,6 +46,7 @@ import Carousel from "./components/Carousel";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Separator } from "@/components/ui/separator";
 import { findTargets } from "@/utils/filesys";
+import { useText } from "@/hooks/use-text";
 
 const SAFE_HTML_CONFIG = {
 	ALLOWED_TAGS: [
@@ -147,6 +148,7 @@ const InstalledCache = {
 	"": {} as { [key: string]: Record<string, string>[] },
 };
 function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item: any, mode?: string) => void }) {
+	const t = useText();
 	const selected = useAtomValue(BROWSE_SELECTED);
 	const [rightSlideOverOpen, setRightSlideOverOpen] = useAtom(BROWSE_RIGHT_SLIDE_OVER_OPEN);
 	const game = useAtomValue(BROWSE_SETTINGS).game as Games;
@@ -166,7 +168,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 	const item = onlineData[game][selected as any] as any;
 	const [installedItems, setInstalledItems] = useState<Record<string, string>[]>([]);
 	const [installedItem, setInstalledItem] = useState<number>(-1);
-	const type = installedItems.length ? "Update/Reinstall" : "Install";
+	const type = installedItems.length ? t("Reinstall") : t("Install");
 	useEffect(() => {
 		now = Date.now() / 1000;
 		const controller = new AbortController();
@@ -298,20 +300,17 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 						<>
 							{file._sAvState == "done" && file._sAvResult == "clean" ? (
 								<div className=" bg-success w-16 px-1 text-center rounded-lg">
-									{/* {textData._RightSideBar._RightOnline.Clean} */}
-									Clean
+									{t("Clean")}
 								</div>
 							) : (
 								<div className=" bg-destructive w-16 px-1 text-center rounded-lg">
-									{/* {textData._RightSideBar._RightOnline.Danger} */}
-									Danger
+									{t("Danger")}
 								</div>
 							)}
 						</>
 					) : (
 						<div className=" bg-warn w-12 px-1 text-center rounded-lg">
-							{/* {textData._RightSideBar._RightOnline.Pending} */}
-							Pending
+							{t("Pending")}
 						</div>
 					)}
 				</div>
@@ -431,7 +430,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 										<span className="text-[0.625rem] font-medium">{comment._aPoster?._sUserTitle}</span>
 									</div>
 									{comment._aLabels.has("Submitter") && (
-										<span className="text-xs rounded px-1 bg-accent text-background">{"Submitter"}</span>
+										<span className="text-xs rounded px-1 bg-accent text-background">{t("submitter")}</span>
 									)}
 									<span className="text-xs text-gray-400">
 										{getTimeDifference(now, comment._tsDateModified || comment._tsDateAdded || 0)}
@@ -510,7 +509,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 											}}
 										>
 											{/* {textData._RightSideBar._RightOnline.ViewReps} */}
-											View Replies ({comment._nReplyCount})
+											{t("ViewReps")} ({comment._nReplyCount})
 										</Button>
 									)}
 								</div>
@@ -543,7 +542,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 									key="no-selection"
 									className="text-accent flex items-center justify-center h-full p-4"
 								>
-									No item selected
+									{t("NoItem")}
 								</motion.div>
 							) : !onlineData[game][selected] ? (
 								<motion.div
@@ -567,9 +566,9 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 								>
 									{
 										{
-											Private: "This mod has been set to private.",
-											Deleted: "This mod has been deleted.",
-											Withheld: "This mod has been withheld.",
+											Private: t("Private"),
+											Deleted: t("Deleted"),
+											Withheld: t("Withheld"),
 										}[item._bIsPrivate ? "Private" : item._bIsTrashed ? "Deleted" : "Withheld"]
 									}
 									{selected.startsWith("Mod") && (
@@ -578,7 +577,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 											target="_blank"
 											className="text-xs"
 										>
-											Open in browser
+											{t("OpenBrowser")}
 										</a>
 									)}
 								</motion.div>
@@ -618,12 +617,12 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 												<Button
 													onClick={() => {
 														navigator.clipboard.writeText(item._sProfileUrl || "");
-														addToast({ type: "success", message: "Link copied to clipboard!" });
+														addToast({ type: "success", message: t("LinkCopied") });
 														setLinkPopoverOpen(false);
 														setLinkExistingPopoverOpen(false);
 													}}
 												>
-													Copy Link
+													{t("CopyLink")}
 												</Button>
 												<Button
 													className="w-full mt-2"
@@ -638,7 +637,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 														setLinkExistingPopoverOpen(false);
 													}}
 												>
-													Open in browser
+													{t("OpenBrowser")}
 												</Button>
 											</PopoverContent>
 										</Popover>
@@ -697,7 +696,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 																: "bg-input/50 text-accent hover:text-accent hover:bg-input")
 														}
 													>
-														About{" "}
+														{t("About")}{" "}
 														<ChevronDownIcon
 															id="deschev"
 															className=" transform-[roate(180deg)] duration-200"
@@ -733,7 +732,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 																: "bg-input/50 text-accent hover:text-accent hover:bg-input")
 														}
 													>
-														Updates{" "}
+														{t("Updates")}{" "}
 														<ChevronDownIcon
 															id="deschev"
 															className=" transform-[roate(180deg)] duration-200"
@@ -804,7 +803,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 															: "bg-input/50 text-accent hover:text-accent hover:bg-input")
 													}
 												>
-													Comments{" "}
+													{t("Comments")}{" "}
 													<ChevronDownIcon
 														id="deschev"
 														className=" transform-[roate(180deg)] duration-200"
@@ -817,7 +816,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 													? recursiveComments(item._aComments.list, 0)
 													: !loadingComments && (
 															<div className="flex items-center justify-center w-full p-4 text-accent">
-																No comments yet.
+																{t("NoComs")}
 															</div>
 														)}
 												{loadingComments ? (
@@ -833,7 +832,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 																setLoadingComments(true);
 															}}
 														>
-															Load more comments
+															{t("LoadMore")}
 														</Button>
 													)
 												)}
@@ -904,7 +903,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 														</PopoverTrigger>
 														<PopoverContent className="w-152 max-w-[calc(42vw-8.625rem)] mr-2 max-h-[75vh] mb-2 overflow-auto gap-1 bg-sidebar/50 backdrop-blur-md p-1 flex flex-col">
 															<Label className="bg-accent/25 data-zzz:bg-zzz-accent-2/25 data-zzz:text-zzz-accent-2 text-accent flex items-center justify-center w-full h-12 text-lg rounded-md">
-																Install Separately
+																{t("Sep")}
 															</Label>
 															{popoverContent}
 														</PopoverContent>
@@ -932,7 +931,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 																</div>
 															</>
 														) : (
-															<>Select Mod to Update</>
+															<>{t("selectModUpd")}</>
 														)}
 													</PopoverTrigger>
 													<PopoverContent
@@ -1029,7 +1028,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 										}, 50);
 									}}
 								>
-									About
+									{t("About")}
 								</Button>
 							)}
 							{item?._eUpdate && (
@@ -1055,7 +1054,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 										}, 50);
 									}}
 								>
-									Updates
+									{t("Updates")}
 								</Button>
 							)}
 							{item && (
@@ -1087,7 +1086,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 										}, 50);
 									}}
 								>
-									Comments
+									{t("Comments")}
 								</Button>
 							)}
 						</div>

@@ -11,6 +11,7 @@ export async function init() {
 export async function sendNotif(title: string, body: string) {
 	try {
 		let perms = await init();
+		console.log("Notification permission granted:", perms);
 		if (perms) {
 			sendNotification({ title, body });
 		}

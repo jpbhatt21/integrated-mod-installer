@@ -7,17 +7,8 @@ import { useEffect, useState } from "react";
 import type { EmblaCarouselType } from "embla-carousel";
 import Blur from "./Filter";
 import { OnlineMod } from "@/utils/types";
+import { useText } from "@/hooks/use-text";
 
-let dict = {
-	today: "the Day",
-	yesterday: "Yesterday",
-	week: "the Week",
-	month: "the Month",
-	"3month": "the Quarter",
-	"6month": "the Year",
-	year: "the Year",
-	alltime: "All Time",
-};
 function Carousel({
 	data,
 	onModClick,
@@ -27,6 +18,7 @@ function Carousel({
 	onModClick?: (e: any, data: OnlineMod) => void;
 	blur?: boolean;
 }) {
+	const t = useText();
 	const [api, setApi] = useState<EmblaCarouselType | undefined>();
 	const [current, setCurrent] = useState(0);
 	useEffect(() => {
@@ -68,10 +60,10 @@ function Carousel({
 							>
 								<div className="text-accent -mb-18 z-10 flex justify-between w-full h-16 overflow-hidden rounded-lg pointer-events-none">
 									<label className="bg-background/50 backdrop-blur-md h-fit brightness-100 px-4 py-2 text-lg font-bold rounded-tl-lg rounded-br-lg">
-										Best of {dict[(item._sPeriod || "alltime") as keyof typeof dict]}{" "}
+										{t("bestOf", { date: t(item._sPeriod || "alltime") })}
 									</label>
 									<label className="bg-background/50 py-2.5 px-4 rounded-bl-lg rounded-tr-lg backdrop-blur-md h-fit brightness-100 ">
-										by {item._aSubmitter._sName}
+										{t("by", { user: item._aSubmitter._sName })}
 									</label>
 								</div>
 								<Blur blur={item._sInitialVisibility == "hide" && blur} />

@@ -34,10 +34,12 @@ export default function Dashboard({
 	elementRefs,
 	prev,
 	addToDownloads,
+	setCurPage,
 }: {
 	elementRefs: any;
 	prev: any;
 	addToDownloads: (url: string, item: any) => void;
+	setCurPage: (page: any) => void;
 }) {
 	const t = useText();
 	const config = useAtomValue(CONFIG);
@@ -71,7 +73,7 @@ export default function Dashboard({
 				addToDownloads(item.source, item);
 			} else {
 				addToast({
-					message: `Select valid directory for ${GAME_NAMES[item.game]}`,
+					message: t("SelectValDir", { game: GAME_NAMES[item.game] }),
 					type: "error",
 				});
 			}
@@ -250,8 +252,27 @@ export default function Dashboard({
 					))}
 				</div>
 			) : (
-				<div className="border-border/30 bg-background/10 text-muted-foreground flex items-center justify-center w-full h-full border rounded-lg">
-					No active downloads
+				<div className="border-border/30 bg-background/10 gap-4 text-muted-foreground flex flex-col items-center justify-center w-full h-full border rounded-lg">
+					{t("noAct")}
+					<div className="flex w-124 opacity-80 items-center justify-evenly">
+						<Button className="ml-2" onClick={() => setCurPage("browse")}>
+							{t("browseA")}
+						</Button>
+						<Button
+						
+							className="ml-2"
+							onClick={() => {
+								const a = document.createElement("a");
+								a.href = "https://gamebanana.com/";
+								a.target = "_blank";
+								document.body.appendChild(a);
+								a.click();
+								document.body.removeChild(a);
+							}}
+						>
+							{t("browseB")}
+						</Button>
+					</div>
 				</div>
 			)}
 		</div>

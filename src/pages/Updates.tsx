@@ -1,18 +1,19 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { DownloadIcon, ExternalLinkIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
+import { ArrowUpRightFromSquareIcon, DownloadIcon, ExternalLinkIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useText } from "@/hooks/use-text";
 import { useAtom, useAtomValue } from "jotai";
 import { SAVED_LANG, UPDATE } from "@/utils/vars";
 import { checkForUpdates } from "@/utils/init";
+import { BANANA_LINK, BANANA_LINK2, DISCORD_LINK } from "@/utils/consts";
 export default function Updates() {
 	const t = useText();
 	const [updateInfo, setUpdateInfo] = useAtom(UPDATE);
 	const [checking, setChecking] = useState(false);
 	const [downloading, setDownloading] = useState(false);
-	const savedLang = useAtomValue(SAVED_LANG)
+	const savedLang = useAtomValue(SAVED_LANG);
 	const checkForUpdate = async () => {
 		setChecking(true);
 		await checkForUpdates();
@@ -44,12 +45,17 @@ export default function Updates() {
 	};
 
 	useEffect(() => {
-		if(!updateInfo.update && !updateInfo.error)
-		checkForUpdate();
+		if (!updateInfo.update && !updateInfo.error) checkForUpdate();
 	}, []);
-	const majorChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.major || updateInfo.releaseNotes?.major : [] as string[];
-	const minorChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.minor || updateInfo.releaseNotes?.minor : [] as string[];
-	const patchChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.patch || updateInfo.releaseNotes?.patch : [] as string[];
+	const majorChanges: string[] = updateInfo?.releaseNotes
+		? updateInfo?.releaseNotes?.[savedLang]?.major || updateInfo.releaseNotes?.major
+		: ([] as string[]);
+	const minorChanges: string[] = updateInfo?.releaseNotes
+		? updateInfo?.releaseNotes?.[savedLang]?.minor || updateInfo.releaseNotes?.minor
+		: ([] as string[]);
+	const patchChanges: string[] = updateInfo?.releaseNotes
+		? updateInfo?.releaseNotes?.[savedLang]?.patch || updateInfo.releaseNotes?.patch
+		: ([] as string[]);
 	const status = updateInfo.error
 		? t("checkFailed", { error: updateInfo.error })
 		: updateInfo.restartRequired
@@ -77,30 +83,38 @@ export default function Updates() {
 					</div>
 					<div className="flex gap-2">
 						<Button variant="outline" onClick={checkForUpdate} disabled={checking || downloading}>
-							{checking ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcwIcon className="mr-2 h-4 w-4" />}
+							{checking ? (
+								<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+							) : (
+								<RefreshCcwIcon className="mr-2 h-4 w-4" />
+							)}
 							{checking ? t("checking") : t("checkUpd")}
 						</Button>
 						{updateInfo.hasUpdate && (
 							<Button onClick={downloadUpdate} disabled={downloading || updateInfo.restartRequired}>
-								{downloading ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <DownloadIcon className="mr-2 h-4 w-4" />}
+								{downloading ? (
+									<Loader2Icon className="mr-2 h-4 w-4 animate-spin" />
+								) : (
+									<DownloadIcon className="mr-2 h-4 w-4" />
+								)}
 								{downloading
-								? `${t("downloading")}${updateInfo.progress === undefined ? "..." : ` ${updateInfo.progress}%`}`
+									? `${t("downloading")}${updateInfo.progress === undefined ? "..." : ` ${updateInfo.progress}%`}`
 									: updateInfo.restartRequired
-									? t("installed")
-									: t("downloadUpd")}
+										? t("installed")
+										: t("downloadUpd")}
 							</Button>
 						)}
 					</div>
 				</CardContent>
 				<div className="w-full h-2 rounded-b-2xl">
 					<div
-					className="bg-accent animate-accordion-down"
-					style={{
-						width: `${updateInfo.progress || 0}%`,
-						height: "100%",
-						transition: "width 0.3s ease-in-out",
-						borderTopRightRadius: updateInfo.progress||0<100 ? "1rem" : 0,
-					}}
+						className="bg-accent animate-accordion-down"
+						style={{
+							width: `${updateInfo.progress || 0}%`,
+							height: "100%",
+							transition: "width 0.3s ease-in-out",
+							borderTopRightRadius: updateInfo.progress || 0 < 100 ? "1rem" : 0,
+						}}
 					/>
 				</div>
 			</Card>
@@ -143,15 +157,68 @@ export default function Updates() {
 			)}
 
 			<Card>
-				<CardContent className="flex items-center justify-between pt-6">
+				<CardContent className="flex items-center justify-between">
 					<div>
 						<p className="font-medium">{t("viewChangelog")}</p>
 						<p className="text-sm text-muted-foreground">{t("changelogDesc")}</p>
 					</div>
-					<Button variant="ghost" size="sm" onClick={() => openUrl("https://github.com/jpbhatt21/integrated-mod-installer/releases")}>
+					<Button
+						variant="ghost"
+						size="sm"
+						onClick={() => openUrl("https://github.com/jpbhatt21/integrated-mod-installer/releases")}
+					>
 						<ExternalLinkIcon className="mr-2 h-4 w-4" />
 						{t("viewChangelogBtn")}
 					</Button>
+				</CardContent>
+			</Card>
+			<Card>
+				<CardContent className="flex items-center justify-between">
+					<div>
+						<p className="font-medium">{t("contactDev")}</p>
+						<p className="text-sm text-muted-foreground">
+							{t("contactDevDesc")}
+						</p>
+					</div>
+					<div className="flex items-center justify-center gap-1">
+						<a
+							href={BANANA_LINK}
+							target="_blank"
+							className="hover:opacity-100 flex items-center gap-1 text-xs duration-200 opacity-50"
+						>
+							{" "}
+							<img className="h-4" src="/GBLogo.png" /> <img className="h-3" src="/GBTitle.png" />
+						</a>
+						<label className="opacity-50 -mt-1">|</label>
+						<a
+							href={DISCORD_LINK}
+							target="_blank"
+							className="hover:opacity-100 flex items-center gap-1 text-xs duration-200 opacity-50"
+						>
+							{" "}
+							<img className="h-5 text-white" src="/DCLogo.png" />
+						</a>
+					</div>
+				</CardContent>
+			</Card>
+			<Card>
+				<CardContent className="flex items-center justify-between">
+					<div>
+						<p className="font-medium">{t("likeApp")}</p>
+						<p className="text-sm text-muted-foreground">
+							{t("likeAppDesc")}
+						</p>
+					</div>
+					<div className="flex items-center justify-center gap-1">
+						<a
+							href={BANANA_LINK2}
+							target="_blank"
+							className="hover:opacity-100 flex items-center gap-1 text-xs duration-200 opacity-50"
+						>
+							<ArrowUpRightFromSquareIcon className="h-4"/>
+							<img className="h-4" src="/IMMDecor.png" />
+						</a>
+					</div>
 				</CardContent>
 			</Card>
 		</div>

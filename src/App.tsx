@@ -24,7 +24,6 @@ import Browse from "./pages/browser/Browse";
 import { AnimatePresence, motion } from "motion/react";
 import { apiClient } from "./utils/api";
 import { useText, TextKey } from "./hooks/use-text";
-import { app } from "@tauri-apps/api";
 import { init as initNotifications, sendNotif } from "./utils/notifications";
 type Page = "dashboard" | "settings" | "updates" | "browse";
 interface Action {
@@ -98,9 +97,7 @@ function App() {
 		if (updateInfo.hasUpdate && updateInfo.latestVersion > VERSION) {
 			const lastIgnore = localStorage.getItem("last-ignore-update") || "";
 			if (lastIgnore != updateInfo.latestVersion) {
-				setPrevPageIndex(curPageIndex);
-				setCurPageIndex(navItems.findIndex((item) => item.id == "updates"));
-				setTimeout(() => setCurrentPage("updates"), 0);
+				setCurPage("updates");
 				localStorage.setItem("last-ignore-update", updateInfo.latestVersion);
 			}
 		}
@@ -110,7 +107,11 @@ function App() {
 		delete stored[key];
 		sessionStorage.setItem("downloads", JSON.stringify(stored));
 	}
-
+	function setCurPage(Page: Page) {
+		setPrevPageIndex(curPageIndex);
+		setCurPageIndex(navItems.findIndex((item) => item.id == Page));
+		setTimeout(() => setCurrentPage(Page), 0);
+	}
 	function markDownloadFailed(key: string, message: string) {
 		const current = store.get(DOWNLOAD_LIST);
 		const failedItem =
@@ -193,8 +194,11 @@ function App() {
 				if (mode == "default") {
 					console.log(isAppVisible, "isAppVisible");
 					if (!isAppFocused) {
-						await appWindow.unminimize();
 						await appWindow.show();
+						if (isAppMinimized) {
+							await appWindow.toggleMaximize();
+							await appWindow.toggleMaximize();
+						}
 						await appWindow.setAlwaysOnTop(true);
 						await appWindow.setAlwaysOnTop(false);
 					}
@@ -256,7 +260,7 @@ function App() {
 			if (addToQueue) {
 				prev.queue.push(ele);
 				addToast({
-					message: `Added "${ele.name}" to the download queue for ${GAME_NAMES[game]}.`,
+					message: t("AddedToQueue", { modName: ele.name }),
 					type: "success",
 				});
 
@@ -265,22 +269,21 @@ function App() {
 				}
 			} else {
 				prev.failed.push(ele);
-				setPrevPageIndex(curPageIndex);
-				setCurPageIndex(navItems.findIndex((item) => item.id == "settings"));
-				setTimeout(() => setCurrentPage("settings"), 0);
+				setCurPage("settings");
 
 				if (!isAppFocused) {
-					appWindow.unminimize();
 					appWindow.show();
+					if (isAppMinimized) {
+						appWindow.toggleMaximize().then(() => {
+							appWindow.toggleMaximize();
+						});
+					}
 					appWindow.setAlwaysOnTop(true).then(() => {
 						appWindow.setAlwaysOnTop(false);
 					});
 				}
 				if (!isAppVisible || isAppMinimized) {
-					sendNotif(
-						t("invDir", { game: GAME_NAMES[game] }),
-						t("invDirDesc", { game: GAME_NAMES[game] })
-					);
+					sendNotif(t("invDir", { game: GAME_NAMES[game] }), t("invDirDesc", { game: GAME_NAMES[game] }));
 				}
 				setPendingActions((prev) => [
 					...prev,
@@ -528,7 +531,9 @@ function App() {
 			case "browse":
 				return <Browse addToDownloads={addToDownloads} />;
 			default:
-				return <Dashboard elementRefs={elementRefs} prev={prev} addToDownloads={addToDownloads} />;
+				return (
+					<Dashboard elementRefs={elementRefs} prev={prev} addToDownloads={addToDownloads} setCurPage={setCurPage} />
+				);
 		}
 	};
 	useEffect(() => {
@@ -585,19 +590,18 @@ function App() {
 					</div>
 
 					<div className="z-20 flex flex-col items-center w-full h-full gap-1 p-2 pl-3 font-bold pointer-events-auto">
-						{navItems.map((item, index) => (
+						{navItems.map((item) => (
 							<Button
 								key={item.id}
 								variant={currentPage === item.id ? "default" : "ghost"}
 								className={`w-full aspect-square flex-col pointer-events-auto justify-center text-xs min-h-fit gap-0.5 ${
 									currentPage === item.id
 										? "bg-accent/90 text-background hover:brightness-110"
-										: (updateInfo.hasUpdate && item.id=="updates"?"duration-300 animate-pulse ": "")+"text-muted-foreground hover:text-background hover:bg-accent/50"
+										: (updateInfo.hasUpdate && item.id == "updates" ? "duration-300 animate-pulse " : "") +
+											"text-muted-foreground hover:text-background hover:bg-accent/50"
 								}`}
 								onClick={() => {
-									setPrevPageIndex(curPageIndex);
-									setCurPageIndex(index);
-									setTimeout(() => setCurrentPage(item.id), 0);
+									setCurPage(item.id);
 								}}
 							>
 								<div
@@ -605,7 +609,6 @@ function App() {
 									style={{
 										transform: currentPage == item.id ? "scale(1.15)" : "scale(1)",
 									}}
-
 								>
 									{item.icon}
 								</div>

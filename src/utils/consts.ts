@@ -2,7 +2,9 @@ import { Games, Language } from "./types";
 import GAME_DATA from "@/gameData.json";
 import TEXT from "@/textData.json";
 export const DISCORD_LINK = "https://discord.gg/QGkKzNapXZ";
-export const BANANA_LINK = "https://gamebanana.com/mods/593490";
+export const BANANA_LINK = "https://gamebanana.com/tools/23428";
+export const BANANA_LINK2 = "https://gamebanana.com/mods/593490";
+
 export const UNCATEGORIZED = "Uncategorized";
 export const IMAGE_SERVER = "http://127.0.0.1:4469/preview";
 export const managedSRC = "DISABLED - ALL MODS ARE STORED HERE (Managed by IMM)";

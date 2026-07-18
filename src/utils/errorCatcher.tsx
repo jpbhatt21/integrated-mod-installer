@@ -7,6 +7,7 @@ import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
 import { open } from "@tauri-apps/plugin-dialog";
 import { error } from "@/lib/logger";
 import { invoke } from "@tauri-apps/api/core";
+import Text from "@/textData.json";
 
 const DISCORD_LINK = "https://discord.gg/QGkKzNapXZ";
 const BANANA_LINK = "https://gamebanana.com/mods/593490";
@@ -104,7 +105,8 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 
 	override render() {
 		if (!this.state.hasError) return this.props.children as React.ReactElement;
-
+		const lang = JSON.parse(localStorage.getItem("imm-lang") || '"en"');
+		const textData = Text[lang as keyof typeof Text] || Text["en"];
 		const { error, info } = this.state;
 
 		return (
@@ -121,8 +123,8 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 						src="https://media.tenor.com/gSPV57XXMsAAAAAj/seseren.gif"
 						style={{ objectFit: "cover", objectPosition: "0 -12px" }}
 					/>
-					<div className="text-accent text-5xl">Oh no!</div>
-					<div className="text-sm text-muted-foreground mb-4">Something went wrong and the app cannot continue.</div>
+					<div className="text-accent text-5xl">{textData.ohNo}</div>
+					<div className="text-sm text-muted-foreground mb-4">{textData.errOcc}</div>
 
 					{error && (
 						<div className="mb-4 text-sm text-destructive flex gap-2">
@@ -133,7 +135,7 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 
 					<div className="flex gap-2 mb-4">
 						<Button className="w-36" onClick={this.reload} aria-label="Reload application">
-							Reload App
+							{textData.reload}
 						</Button>
 
 						{/* <button
@@ -143,13 +145,8 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 						>
 							Open Discord (report)
 						</button> */}
-						{error?.message.startsWith("Corrupted config file detected") && (
-							<Button className="w-36" onClick={() => this.importer(error.message)} aria-label="Copy error details">
-								Import Config
-							</Button>
-						)}
 						<Button className="w-36" onClick={() => invoke('open_logs_folder')} aria-label="Copy error details">
-							Open Logs Folder
+							{textData.openLogs}
 						</Button>
 					</div>
 					{info?.componentStack && (
@@ -170,7 +167,7 @@ export default class ErrorBoundary extends React.Component<React.PropsWithChildr
 						</Dialog>
 					)}
 					<div className="flex fixed bottom-4 items-center gap-2">
-						<label className="opacity-50">Contact Developer</label>
+						<label className="opacity-50">{textData.contactDev}</label>
 						<a
 							href={BANANA_LINK}
 							target="_blank"

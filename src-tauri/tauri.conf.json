@@ -57,7 +57,7 @@
 		"updater": {
 			"pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVDNDVCOEZFQzIyMkJDMjkKUldRcHZDTEMvcmhGWEhGdWNGcFJzN1hYR05YVXZPMXlzcVc3b2xrMzA5M25SdTZkMldtOUFWbzcK",
 			"endpoints": [
-				"https://github.com/jpbhatt21/integrated-mod-manager/releases/latest/download/latest.json"
+				"https://github.com/jpbhatt21/integrated-mod-installer/releases/latest/download/latest.json"
 			],
 			"windows": {
 				"installMode": "passive"

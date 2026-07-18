@@ -88,6 +88,7 @@ export async function getModDir(overwrite = false) {
 	if (overwrite) store.set(CONFIG, config);
 }
 export async function checkForUpdates() {
+	apiClient.healthCheck()
 	try {
 		const update =  await check({ target: "windows-x86_64" });
 		store.set(UPDATE,{
@@ -120,6 +121,7 @@ export async function main() {
 				...config,
 				...JSON.parse(await readTextFile("config.json")),
 			};
+			if(config.clientDate) apiClient.setClient(config.clientDate);
 		} catch (e) {
 			config = { ...defConfig };
 		}
