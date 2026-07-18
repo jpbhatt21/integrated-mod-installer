@@ -4,9 +4,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { GAME_ICONS, GAME_NAMES, GAMES, LANG_LIST } from "@/utils/consts";
 import { useAtom } from "jotai";
-import { CONFIG, NOTIFICATIONS, SAVED_LANG } from "@/utils/vars";
+import { BROWSE_SETTINGS, CONFIG, NOTIFICATIONS, SAVED_LANG } from "@/utils/vars";
 import { useText } from "@/hooks/use-text";
-import { FolderIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
+import { EyeClosedIcon, EyeIcon, EyeOffIcon, FolderIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { saveConfig, selectPath } from "@/utils/filesys";
@@ -14,7 +14,13 @@ import { exists } from "@tauri-apps/plugin-fs";
 import { join } from "@/utils/utils";
 import { getModDir, readXXMIConfig } from "@/utils/init";
 import { addToast } from "@/_Toaster/ToastProvider";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import {
+	AlertDialog,
+	AlertDialogAction,
+	AlertDialogCancel,
+	AlertDialogContent,
+	AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import TEXT from "@/textData.json";
 import { useState } from "react";
@@ -23,6 +29,7 @@ export default function Settings() {
 	const [config, setConfig] = useAtom(CONFIG);
 	const [notifications, setNotifications] = useAtom(NOTIFICATIONS);
 	const [language, setLanguage] = useAtom(SAVED_LANG);
+	const [browseSettings, setBrowseSettings] = useAtom(BROWSE_SETTINGS);
 	const [langAlertData, setLangAlertData] = useState({ prev: "en", new: "en" } as {
 		prev: keyof typeof TEXT;
 		new: keyof typeof TEXT;
@@ -32,9 +39,8 @@ export default function Settings() {
 	return (
 		<div className="p-4 space-y-4">
 			<AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
-				<AlertDialogContent
-				>
-					{ 
+				<AlertDialogContent>
+					{
 						<>
 							<div className=" flex flex-col items-center w-120 gap-6 mt-6 text-center">
 								<div className="flex flex-col items-center justify-center gap-2 text-xl text-gray-200">
@@ -155,20 +161,6 @@ export default function Settings() {
 							}));
 							saveConfig();
 							sessionStorage.setItem("minimizeToTray", checked ? "true" : "false");
-						}}
-					/>
-				</CardContent>
-			</Card>
-			<Card className="flex flex-row w-full justify-between">
-				<CardHeader className="w-full">
-					<CardTitle>{t("notif")}</CardTitle>
-					<CardDescription>{t("notifDesc")}</CardDescription>
-				</CardHeader>
-				<CardContent className="flex items-center gap-1">
-					<Switch
-						checked={notifications}
-						onCheckedChange={(checked) => {
-							setNotifications(checked);
 						}}
 					/>
 				</CardContent>
@@ -296,6 +288,41 @@ export default function Settings() {
 			</Card>
 			<Card className="flex flex-row w-full justify-between">
 				<CardHeader className="w-full">
+					<CardTitle>{t("nsfw")}</CardTitle>
+					<CardDescription>{t("nsfwDesc")}</CardDescription>
+				</CardHeader>
+				<CardContent className="space-y-4">
+					<Tabs
+						value={browseSettings.nsfw.toString()}
+						onValueChange={(val) => {
+							setBrowseSettings((prev) => ({
+								...prev,
+								nsfw: parseInt(val),
+							}));
+							saveConfig();
+						}}
+						className="w-full"
+					>
+						<TabsList className="bg-background/0 h-10 w-full">
+							<TabsTrigger value="0">
+								<EyeOffIcon className="mr-2 h-4 w-4" />
+								{t("hide")}
+							</TabsTrigger>
+							<TabsTrigger value="1">
+								<EyeClosedIcon className="mr-2 h-4 w-4" />
+								{t("blur")}
+							</TabsTrigger>
+							<TabsTrigger value="2">
+								<EyeIcon className="mr-2 h-4 w-4" />
+								{t("show")}
+							</TabsTrigger>
+						</TabsList>
+					</Tabs>
+				</CardContent>
+			</Card>
+
+			<Card className="flex flex-row w-full justify-between">
+				<CardHeader className="w-full">
 					<CardTitle>{t("concDl")}</CardTitle>
 					<CardDescription>{t("concDlDesc")}</CardDescription>
 				</CardHeader>
@@ -362,6 +389,20 @@ export default function Settings() {
 								preview: checked,
 							}));
 							saveConfig();
+						}}
+					/>
+				</CardContent>
+			</Card>
+			<Card className="flex flex-row w-full justify-between">
+				<CardHeader className="w-full">
+					<CardTitle>{t("notif")}</CardTitle>
+					<CardDescription>{t("notifDesc")}</CardDescription>
+				</CardHeader>
+				<CardContent className="flex items-center gap-1">
+					<Switch
+						checked={notifications}
+						onCheckedChange={(checked) => {
+							setNotifications(checked);
 						}}
 					/>
 				</CardContent>
