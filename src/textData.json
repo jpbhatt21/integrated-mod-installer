@@ -116,7 +116,9 @@
 		"contactDev": "Contact Developer",
 		"contactDevDesc":"Found a bug? Or if you have a question or a feature request?",
 		"likeApp":"Like the app but feel like something is missing?",
-		"likeAppDesc":"Try Integrated Mod Manager(IMM) for all the features that IMI has + the ability to manage mods!"
+		"likeAppDesc":"Try Integrated Mod Manager(IMM) for all the features that IMI has + the ability to manage mods!",
+		"notif": "Notifications",
+		"notifDesc": "Enable or disable notifications for mod downloads and updates when the app is minimized or running in the background."
 
 	},
 	"cn": {
@@ -236,7 +238,9 @@
 		"browseB":"在浏览器中打开 gamebanana",
 		"contactDevDesc":"发现了一个错误？或者如果您有问题或功能请求？",
 		"likeApp":"喜欢这个应用，但觉得缺少一些东西？",
-		"likeAppDesc":"尝试使用 Integrated Mod Manager(IMM) 来获取 IMI 的所有功能 + 管理模组的能力"
+		"likeAppDesc":"尝试使用 Integrated Mod Manager(IMM) 来获取 IMI 的所有功能 + 管理模组的能力",
+		"notif": "通知",
+		"notifDesc": "在应用最小化或在后台运行时，启用或禁用模组下载和更新的通知"
 	},
 	"ru": {
 		"mjr": "Крупные изменения",
@@ -361,7 +365,9 @@
 		"browseB":"Открыть gamebanana в браузере",
 		"contactDevDesc":"Нашли ошибку? Или если у вас есть вопрос или запрос на новую функцию?",
 		"likeApp":"Вам нравится это приложение, но вы чувствуете нехватку чего-то?",
-		"likeAppDesc":"Попробуйте Integrated Mod Manager(IMM) для всех функций, которые есть у IMI + возможность управлять модами!"
+		"likeAppDesc":"Попробуйте Integrated Mod Manager(IMM) для всех функций, которые есть у IMI + возможность управлять модами!",
+		"notif": "Уведомления",
+		"notifDesc": "Включить или отключить уведомления о загрузке и обновлении модов при минимизации приложения или его работе в фоне"
 	},
 	"jp": {
 		"mjr": "大きな変更",
@@ -480,7 +486,9 @@
 		"browseB":"ブラウザでgamebananaを開く",
 		"contactDevDesc":"バグを見つけましたか？ または、質問や機能のリクエストがある場合は？",
 		"likeApp":"アプリが気に入ったけど、何かが足りないと感じますか？",
-		"likeAppDesc":"IMIのすべての機能とモッドを管理する機能を備えたIntegrated Mod Manager（IMM）を試してみてください！"
+		"likeAppDesc":"IMIのすべての機能とモッドを管理する機能を備えたIntegrated Mod Manager（IMM）を試してみてください！",
+		"notif": "通知",
+		"notifDesc": "アプリが最小化されているか、バックグラウンドで実行されている場合に、モッドのダウンロードと更新の通知を有効または無効にします。"
 	},
 	"kr": {
 		"mjr": "주요 변경 사항",
@@ -599,6 +607,8 @@
 		"browseB":"브라우저에서 gamebanana 열기",
 		"contactDevDesc":"버그를 발견하셨나요? 또는 질문이나 기능 요청이 있으신가요?",
 		"likeApp":"앱이 마음에 드셨지만, 어떤 것이 부족하다고 느끼시나요?",
-		"likeAppDesc":"IMIのすべての機能とモッドを管理する機能を備えたIntegrated Mod Manager（IMM）を試してみてください！"
+		"likeAppDesc":"IMI의 모든 기능과 모드를 관리할 수 있는 기능을 갖춘 Integrated Mod Manager(IMM)를 사용해 보세요!",
+		"notif": "알림",
+		"notifDesc": "앱이 최소화되거나 백그라운드에서 실행될 때 모드 다운로드 및 업데이트 알림을 활성화하거나 비활성화합니다."
 	}
 }

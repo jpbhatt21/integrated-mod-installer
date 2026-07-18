@@ -4,7 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { GAME_ICONS, GAME_NAMES, GAMES, LANG_LIST } from "@/utils/consts";
 import { useAtom } from "jotai";
-import { CONFIG, SAVED_LANG } from "@/utils/vars";
+import { CONFIG, NOTIFICATIONS, SAVED_LANG } from "@/utils/vars";
 import { useText } from "@/hooks/use-text";
 import { FolderIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { useState } from "react";
 import { Separator } from "@/components/ui/separator";
 export default function Settings() {
 	const [config, setConfig] = useAtom(CONFIG);
+	const [notifications, setNotifications] = useAtom(NOTIFICATIONS);
 	const [language, setLanguage] = useAtom(SAVED_LANG);
 	const [langAlertData, setLangAlertData] = useState({ prev: "en", new: "en" } as {
 		prev: keyof typeof TEXT;
@@ -158,6 +159,21 @@ export default function Settings() {
 					/>
 				</CardContent>
 			</Card>
+			<Card className="flex flex-row w-full justify-between">
+				<CardHeader className="w-full">
+					<CardTitle>{t("notif")}</CardTitle>
+					<CardDescription>{t("notifDesc")}</CardDescription>
+				</CardHeader>
+				<CardContent className="flex items-center gap-1">
+					<Switch
+						checked={notifications}
+						onCheckedChange={(checked) => {
+							setNotifications(checked);
+						}}
+					/>
+				</CardContent>
+			</Card>
+
 			<Card>
 				<div className="flex w-full justify-between pr-6">
 					<CardHeader className="w-full">

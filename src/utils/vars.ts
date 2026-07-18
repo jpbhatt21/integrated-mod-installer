@@ -61,7 +61,9 @@ const UPDATE = atom<UpdateInfo>({
 	latestVersion: VERSION,
 	hasUpdate: false,
 });
+const NOTIFICATIONS = atomWithStorage("imi-notifications", true);
 export {
+	NOTIFICATIONS,
 	BROWSE_RIGHT_SLIDE_OVER_OPEN,
 	BROWSE_DATA,
 	BROWSE_SETTINGS,
