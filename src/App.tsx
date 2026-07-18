@@ -12,9 +12,9 @@ import { Button } from "./components/ui/button";
 import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
 import { fetchMod, formatBytes, join, modRouteFromURL, sanitizeFileName, serializeDownloads } from "./utils/utils";
 import { useAtom, useAtomValue } from "jotai";
-import { BROWSE_SETTINGS, CATEGORIES, CONFIG, DOWNLOAD_LIST, FIRST_LOAD, store } from "./utils/vars";
+import { BROWSE_SETTINGS, CATEGORIES, CONFIG, DOWNLOAD_LIST, FIRST_LOAD, store, UPDATE } from "./utils/vars";
 import { DownloadItem, Games, OnlineMod } from "./utils/types";
-import { GAME_GB_IDS, GAME_NAMES, UNCATEGORIZED } from "./utils/consts";
+import { GAME_GB_IDS, GAME_NAMES, UNCATEGORIZED, VERSION } from "./utils/consts";
 import { exists, remove } from "@tauri-apps/plugin-fs";
 import { AlertDialog } from "@radix-ui/react-alert-dialog";
 import { AlertDialogContent } from "./components/ui/alert-dialog";
@@ -24,6 +24,8 @@ import Browse from "./pages/browser/Browse";
 import { AnimatePresence, motion } from "motion/react";
 import { apiClient } from "./utils/api";
 import { useText, TextKey } from "./hooks/use-text";
+import { app } from "@tauri-apps/api";
+import { init as initNotifications, sendNotif } from "./utils/notifications";
 type Page = "dashboard" | "settings" | "updates" | "browse";
 interface Action {
 	title: string;
@@ -37,7 +39,7 @@ interface PendingAction {
 	type: "destructive" | "warn" | "success" | "default";
 }
 const appWindow = getCurrentWindow();
-
+initNotifications();
 const navItems = [
 	{
 		id: "browse" as Page,
@@ -70,6 +72,7 @@ const prev: {
 function App() {
 	const t = useText();
 	const firstLoad = useAtomValue(FIRST_LOAD);
+	const updateInfo = useAtomValue(UPDATE);
 	const [currentPage, setCurrentPage] = useState<Page>(firstLoad ? "settings" : "dashboard");
 	const [prevPageIndex, setPrevPageIndex] = useState<number>(firstLoad ? 2 : 1);
 	const [curPageIndex, setCurPageIndex] = useState<number>(firstLoad ? 2 : 1);
@@ -91,7 +94,17 @@ function App() {
 	useEffect(() => {
 		apiClient.setGame(browseSettings.game as any);
 	}, [browseSettings.game]);
-
+	useEffect(() => {
+		if (updateInfo.hasUpdate && updateInfo.latestVersion > VERSION) {
+			const lastIgnore = localStorage.getItem("last-ignore-update") || "";
+			if (lastIgnore != updateInfo.latestVersion) {
+				setPrevPageIndex(curPageIndex);
+				setCurPageIndex(navItems.findIndex((item) => item.id == "updates"));
+				setTimeout(() => setCurrentPage("updates"), 0);
+				localStorage.setItem("last-ignore-update", updateInfo.latestVersion);
+			}
+		}
+	}, [updateInfo]);
 	function clearStoredDownload(key: string) {
 		const stored = JSON.parse(sessionStorage.getItem("downloads") || "{}");
 		delete stored[key];
@@ -169,17 +182,29 @@ function App() {
 		} else {
 			ele.category = categories[game]?.find((cat) => cat._sName == ele.category)?._sName || UNCATEGORIZED;
 		}
-
+		const isAppVisible = await appWindow.isVisible();
+		const isAppMinimized = await appWindow.isMinimized();
+		const isAppFocused = await appWindow.isFocused();
 		const addToQueue = config.paths[game] && config.paths[game] != "" && (await exists(config.paths[game]));
 		if (addToQueue) {
 			ele.gamePath = config.paths[game];
 			const root = join(ele.gamePath, config.categorized ? ele.category : "");
 			if (await modExists(root, ele, config.categorized)) {
 				if (mode == "default") {
+					console.log(isAppVisible, "isAppVisible");
+					if (!isAppFocused) {
+						await appWindow.unminimize();
+						await appWindow.show();
+						await appWindow.setAlwaysOnTop(true);
+						await appWindow.setAlwaysOnTop(false);
+					}
+					if (!isAppVisible || isAppMinimized) {
+						sendNotif(t("modExists"), t("modExistsDesc", { modName: ele.name }));
+					}
 					setPendingActions((prev) => [
 						...prev,
 						{
-							title: "Mod Already Exists",
+							title: t("modExists"),
 							type: "warn",
 							description: `The mod "${ele.name}" already exists in the directory for ${GAME_NAMES[game]}.`,
 							actions: [
@@ -234,18 +259,35 @@ function App() {
 					message: `Added "${ele.name}" to the download queue for ${GAME_NAMES[game]}.`,
 					type: "success",
 				});
+
+				if (!isAppVisible || isAppMinimized) {
+					sendNotif(t("modAdded"), t("modAddedDesc", { modName: ele.name }));
+				}
 			} else {
 				prev.failed.push(ele);
 				setPrevPageIndex(curPageIndex);
 				setCurPageIndex(navItems.findIndex((item) => item.id == "settings"));
 				setTimeout(() => setCurrentPage("settings"), 0);
 
+				if (!isAppFocused) {
+					appWindow.unminimize();
+					appWindow.show();
+					appWindow.setAlwaysOnTop(true).then(() => {
+						appWindow.setAlwaysOnTop(false);
+					});
+				}
+				if (!isAppVisible || isAppMinimized) {
+					sendNotif(
+						t("invDir", { game: GAME_NAMES[game] }),
+						t("invDirDesc", { game: GAME_NAMES[game] })
+					);
+				}
 				setPendingActions((prev) => [
 					...prev,
 					{
-						title: "Invalid Mod Directory",
+						title: t("invDir", { game: GAME_NAMES[game] }),
 						type: "destructive",
-						description: `The mod directory for ${GAME_NAMES[game]} is invalid or inaccessible.`,
+						description: t("invDirDesc", { game: GAME_NAMES[game] }),
 						actions: [
 							{
 								title: "Okay",
@@ -436,6 +478,10 @@ function App() {
 				finishedElement.categorized = store.get(CONFIG).categorized;
 				await validateModDownload({ ...finishedElement });
 			}
+			const isAppVisible = await appWindow.isVisible();
+			if (!isAppVisible) {
+				sendNotif(t("modDlComplete"), t("modDlCompleteDesc", { modName: finishedElement.name }));
+			}
 			setDownloads((prev) => {
 				prev.extracting = prev.extracting?.filter((item: any) => item.key !== key) || [];
 				if (finishedElement?.key) {
@@ -450,8 +496,12 @@ function App() {
 			clearStoredDownload(key);
 			return;
 		});
-		addListener("download-error", (event) => {
+		addListener("download-error", async (event) => {
 			const payload = event.payload as any;
+			const isAppVisible = await appWindow.isVisible();
+			if (!isAppVisible) {
+				sendNotif(`Download Error`, `Error for ${payload.key}: ${payload.message || payload.stage}`);
+			}
 			console.log(`Download error for key: ${payload.key} with message: ${payload.message || payload.stage}`);
 			markDownloadFailed(payload.key || "", payload.message || payload.stage || "Download failed");
 		});
@@ -542,7 +592,7 @@ function App() {
 								className={`w-full aspect-square flex-col pointer-events-auto justify-center text-xs min-h-fit gap-0.5 ${
 									currentPage === item.id
 										? "bg-accent/90 text-background hover:brightness-110"
-										: "text-muted-foreground hover:text-background hover:bg-accent/50"
+										: (updateInfo.hasUpdate && item.id=="updates"?"duration-300 animate-pulse ": "")+"text-muted-foreground hover:text-background hover:bg-accent/50"
 								}`}
 								onClick={() => {
 									setPrevPageIndex(curPageIndex);
@@ -555,6 +605,7 @@ function App() {
 									style={{
 										transform: currentPage == item.id ? "scale(1.15)" : "scale(1)",
 									}}
+
 								>
 									{item.icon}
 								</div>

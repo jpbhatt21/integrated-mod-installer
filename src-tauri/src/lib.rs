@@ -718,9 +718,10 @@ fn get_image_server_url() -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(
-        
             Builder::default()
                 .with_state_flags(StateFlags::all().difference(StateFlags::DECORATIONS))
                 .build(),

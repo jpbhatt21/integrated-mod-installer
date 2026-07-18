@@ -1,49 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getVersion } from "@tauri-apps/api/app";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { check, type Update } from "@tauri-apps/plugin-updater";
 import { DownloadIcon, ExternalLinkIcon, Loader2Icon, RefreshCcwIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useText } from "@/hooks/use-text";
-
-interface UpdateInfo {
-	currentVersion: string;
-	latestVersion: string;
-	hasUpdate: boolean;
-	releaseNotes?: string | undefined;
-	update?: Update | undefined;
-	error?: string | undefined;
-	progress?: number | undefined;
-	restartRequired?: boolean | undefined;
-}
-
+import { useAtom, useAtomValue } from "jotai";
+import { SAVED_LANG, UPDATE } from "@/utils/vars";
+import { checkForUpdates } from "@/utils/init";
 export default function Updates() {
 	const t = useText();
-	const [updateInfo, setUpdateInfo] = useState<UpdateInfo>({
-		currentVersion: "1.0.0",
-		latestVersion: "1.0.0",
-		hasUpdate: false,
-	});
+	const [updateInfo, setUpdateInfo] = useAtom(UPDATE);
 	const [checking, setChecking] = useState(false);
 	const [downloading, setDownloading] = useState(false);
-
-	const checkForUpdates = async () => {
+	const savedLang = useAtomValue(SAVED_LANG)
+	const checkForUpdate = async () => {
 		setChecking(true);
-		try {
-			const [currentVersion, update] = await Promise.all([getVersion(), check()]);
-			setUpdateInfo({
-				currentVersion,
-				latestVersion: update?.version || currentVersion,
-				hasUpdate: Boolean(update),
-				releaseNotes: update?.body || undefined,
-				update: update || undefined,
-			});
-		} catch (error) {
-			setUpdateInfo((prev) => ({ ...prev, error: String(error) }));
-		} finally {
-			setChecking(false);
-		}
+		await checkForUpdates();
+		setChecking(false);
 	};
 
 	const downloadUpdate = async () => {
@@ -71,16 +44,19 @@ export default function Updates() {
 	};
 
 	useEffect(() => {
-		checkForUpdates();
+		if(!updateInfo.update && !updateInfo.error)
+		checkForUpdate();
 	}, []);
-
+	const majorChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.major || updateInfo.releaseNotes?.major : [] as string[];
+	const minorChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.minor || updateInfo.releaseNotes?.minor : [] as string[];
+	const patchChanges:string[] = updateInfo?.releaseNotes? updateInfo?.releaseNotes?.[savedLang]?.patch || updateInfo.releaseNotes?.patch : [] as string[];
 	const status = updateInfo.error
-		? `Update check failed: ${updateInfo.error}`
+		? t("checkFailed", { error: updateInfo.error })
 		: updateInfo.restartRequired
 			? "Update installed. Restart the app to finish."
 			: updateInfo.hasUpdate
-				? `Version ${updateInfo.latestVersion} is available.`
-				: "You're up to date.";
+				? t("verAvl", { version: updateInfo.latestVersion })
+				: t("verUpToDate");
 
 	return (
 		<div className="p-6 space-y-6">
@@ -89,7 +65,7 @@ export default function Updates() {
 				<p className="text-muted-foreground">{t("checkInstallUpd")}</p>
 			</div>
 
-			<Card>
+			<Card className="pb-0 overflow-hidden">
 				<CardHeader>
 					<CardTitle>{t("curVer")}</CardTitle>
 					<CardDescription>Integrated Mod Installer</CardDescription>
@@ -100,7 +76,7 @@ export default function Updates() {
 						<p className={updateInfo.error ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>{status}</p>
 					</div>
 					<div className="flex gap-2">
-						<Button variant="outline" onClick={checkForUpdates} disabled={checking || downloading}>
+						<Button variant="outline" onClick={checkForUpdate} disabled={checking || downloading}>
 							{checking ? <Loader2Icon className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcwIcon className="mr-2 h-4 w-4" />}
 							{checking ? t("checking") : t("checkUpd")}
 						</Button>
@@ -116,15 +92,52 @@ export default function Updates() {
 						)}
 					</div>
 				</CardContent>
+				<div className="w-full h-2 rounded-b-2xl">
+					<div
+					className="bg-accent animate-accordion-down"
+					style={{
+						width: `${updateInfo.progress || 0}%`,
+						height: "100%",
+						transition: "width 0.3s ease-in-out",
+						borderTopRightRadius: updateInfo.progress||0<100 ? "1rem" : 0,
+					}}
+					/>
+				</div>
 			</Card>
 
 			{updateInfo.hasUpdate && updateInfo.releaseNotes && (
 				<Card>
-					<CardHeader>
-						<CardTitle>What's New in v{updateInfo.latestVersion}</CardTitle>
-					</CardHeader>
 					<CardContent>
-						<p className="text-muted-foreground whitespace-pre-wrap">{updateInfo.releaseNotes}</p>
+						{majorChanges.length > 0 && (
+							<div className="mb-4">
+								<h3 className="text-lg font-semibold text-accent">{t("mjr")}</h3>
+								<ul className="list-disc list-inside">
+									{majorChanges.map((change, index) => (
+										<li key={index}>{change}</li>
+									))}
+								</ul>
+							</div>
+						)}
+						{minorChanges.length > 0 && (
+							<div className="mb-4">
+								<h3 className="font-semibold text-accent">{t("mnr")}</h3>
+								<ul className="list-disc text-sm list-inside">
+									{minorChanges.map((change, index) => (
+										<li key={index}>{change}</li>
+									))}
+								</ul>
+							</div>
+						)}
+						{patchChanges.length > 0 && (
+							<div className="mb-4">
+								<h3 className="font-semibold text-accent">{t("patch")}</h3>
+								<ul className="list-disc text-sm list-inside">
+									{patchChanges.map((change, index) => (
+										<li key={index}>{change}</li>
+									))}
+								</ul>
+							</div>
+						)}
 					</CardContent>
 				</Card>
 			)}

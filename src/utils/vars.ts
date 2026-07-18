@@ -3,15 +3,8 @@ import { atomWithStorage } from "jotai/utils";
 export const store = createStore();
 import defConfig from "../default.json";
 import { VERSION } from "./consts";
-import { Category, DownloadList, Games, Language, OnlineData } from "./types";
+import { Category, DownloadList, Games, Language, OnlineData, UpdateInfo } from "./types";
 import GAME_DATA from "@/gameData.json";
-interface UpdateInfo {
-	version: string;
-	status: "available" | "downloading" | "ready" | "error" | "installed" | "ignored";
-	date: string;
-	body: string;
-	raw: any | null;
-}
 const CATEGORIES = atom({
 	WW: [...GAME_DATA.WW.categoryList, ...GAME_DATA.WW.generic.categories],
 	ZZ: [...GAME_DATA.ZZ.categoryList, ...GAME_DATA.ZZ.generic.categories],
@@ -32,7 +25,6 @@ const DOWNLOAD_LIST = atom<DownloadList>({
 	failed: [],
 });
 const TOASTS = atom([] as any[]);
-const IMM_UPDATE = atom(null as UpdateInfo | null);
 const UPDATER_OPEN = atom(false);
 const NOTICE = atom({
 	heading: "",
@@ -64,6 +56,11 @@ const BROWSE_DATA = atom({
 });
 const BROWSE_RIGHT_SLIDE_OVER_OPEN = atom(false);
 const INIT_DONE = atom(false);
+const UPDATE = atom<UpdateInfo>({
+	currentVersion: VERSION,
+	latestVersion: VERSION,
+	hasUpdate: false,
+});
 export {
 	BROWSE_RIGHT_SLIDE_OVER_OPEN,
 	BROWSE_DATA,
@@ -80,7 +77,7 @@ export {
 	NOTICE,
 	NOTICE_OPEN,
 	UPDATER_OPEN,
-	IMM_UPDATE,
+	UPDATE,
 	TOASTS,
 	DOWNLOAD_LIST,
 	SAVED_LANG,

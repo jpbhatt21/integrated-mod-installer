@@ -5,7 +5,6 @@ import { Label } from "@/components/ui/label";
 import { GAME_ICONS, GAME_NAMES, GAMES, LANG_LIST } from "@/utils/consts";
 import { useAtom } from "jotai";
 import { CONFIG, SAVED_LANG } from "@/utils/vars";
-import { Language } from "@/utils/types";
 import { useText } from "@/hooks/use-text";
 import { FolderIcon, MinusIcon, PlusIcon, Trash2Icon } from "lucide-react";
 import { Input } from "@/components/ui/input";

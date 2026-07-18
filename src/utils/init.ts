@@ -1,11 +1,12 @@
 import { apiClient } from "./api";
-import { GAMES } from "./consts";
+import { GAMES, VERSION } from "./consts";
 import { Category, Games } from "./types";
-import { CATEGORIES, CONFIG, ERR, FIRST_LOAD, INIT_DONE, store } from "./vars";
+import { CATEGORIES, CONFIG, ERR, FIRST_LOAD, INIT_DONE, store, UPDATE } from "./vars";
 import defConfig from "../default.json";
 import { path } from "@tauri-apps/api";
 import { exists, mkdir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs";
 import { join } from "./utils";
+import { check } from "@tauri-apps/plugin-updater";
 async function getXXMIConfig(path: string) {
 	try {
 		return JSON.parse(await readTextFile(join(path, "XXMI Launcher Config.json")));
@@ -86,6 +87,20 @@ export async function getModDir(overwrite = false) {
 	await Promise.all(promises);
 	if (overwrite) store.set(CONFIG, config);
 }
+export async function checkForUpdates() {
+	try {
+		const update =  await check({ target: "windows-x86_64" });
+		store.set(UPDATE,{
+			currentVersion:VERSION,
+			latestVersion: update?.version || VERSION,
+			hasUpdate: Boolean(update),
+			releaseNotes: JSON.parse(update?.body || "null"),
+			update: update || undefined,
+		});
+	} catch (error) {
+		store.set(UPDATE, (prev) => ({ ...prev, error: String(error) }));
+	}
+}
 export async function main() {
 	try {
 		store.set(INIT_DONE, false);
@@ -122,4 +137,5 @@ export async function main() {
 	} catch (e) {
 		store.set(ERR, `Initialization failed: ${e}`);
 	}
+	checkForUpdates()
 }

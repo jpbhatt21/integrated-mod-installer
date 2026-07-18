@@ -1,3 +1,5 @@
+import { Update } from "@tauri-apps/plugin-updater";
+
 export type Games = "WW" | "ZZ" | "GI" | "SR" | "EF" | "";
 export type Language = "en" | "cn" | "ru" | "jp" | "kr" | "";
 export interface DirEntry {
@@ -14,6 +16,16 @@ export interface config{
 	askFileDir: boolean;
 	saveSource: boolean;
 
+}
+export interface UpdateInfo {
+	currentVersion: string;
+	latestVersion: string;
+	hasUpdate: boolean;
+	releaseNotes?: Record<any, any> | undefined | null;
+	update?: Update | undefined;
+	error?: string | undefined;
+	progress?: number | undefined;
+	restartRequired?: boolean | undefined;
 }
 export interface Category {
 	_idRow: number;
