@@ -168,7 +168,8 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 	const item = onlineData[game][selected as any] as any;
 	const [installedItems, setInstalledItems] = useState<Record<string, string>[]>([]);
 	const [installedItem, setInstalledItem] = useState<number>(-1);
-	const type = installedItems.length ? t("Reinstall") : t("Install");
+	console.log("installedItems", installedItems);
+	const type = installedItems.length ? "Reinstall" : "Install";
 	useEffect(() => {
 		now = Date.now() / 1000;
 		const controller = new AbortController();
@@ -883,7 +884,7 @@ function RightSlideOver({ addToDownloads }: { addToDownloads: (url: string, item
 														disabled={!item._aFiles || item._aFiles?.length == 0}
 													>
 														{type == "Install" ? <DownloadIcon /> : <Redo2Icon />}
-														{type}
+														{t(type)}
 													</PopoverTrigger>
 													<PopoverContent
 														className="w-152 max-w-[calc(42vw-8.625rem)] mr-1 max-h-[75vh] overflow-auto gap-1 bg-sidebar/50 backdrop-blur-md p-1 flex flex-col"
